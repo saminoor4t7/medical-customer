@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 class AppUrls {
   static String get baseUrl {
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://192.168.1.3:8000';
+      return 'http://192.168.1.7:8000';
     }
     return 'http://127.0.0.1:8000';
   }
