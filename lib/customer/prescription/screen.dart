@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../main.dart';
 import '../cart/provider.dart';
 import '../pharmacy/provider.dart';
+import 'model.dart';
 import 'services.dart';
 
 class PrescriptionUploadScreen extends ConsumerStatefulWidget {
@@ -34,7 +35,7 @@ class _PrescriptionUploadScreenState
   String? _resultMessage;
   bool _uploadSuccess = false;
   bool _buildingCart = false;
-  int? _prescriptionId;
+  Prescription? _prescription;
 
   Future<void> _pickImage(ImageSource source) async {
     final picked = await _picker.pickImage(
@@ -46,7 +47,7 @@ class _PrescriptionUploadScreenState
       setState(() {
         _selectedImage = File(picked.path);
         _resultMessage = null;
-        _prescriptionId = null;
+        _prescription = null;
       });
     }
   }
@@ -58,6 +59,7 @@ class _PrescriptionUploadScreenState
       _uploading = true;
       _resultMessage = null;
       _uploadSuccess = false;
+      _prescription = null;
     });
 
     try {
@@ -78,7 +80,7 @@ class _PrescriptionUploadScreenState
         }
       }
 
-      final result = await _service.uploadPrescription(
+      final prescription = await _service.uploadPrescription(
         widget.token,
         bytes,
         fileName,
@@ -86,19 +88,13 @@ class _PrescriptionUploadScreenState
         source: 'gallery',
       );
 
-      _prescriptionId = result['id'] is num
-          ? (result['id'] as num).toInt()
-          : int.tryParse(result['id'].toString());
-
-      final aiResponse = result['ai_raw_response'];
-      final status = result['status']?.toString() ?? '';
-
       setState(() {
-        _resultMessage = aiResponse != null
-            ? 'AI Analysis Complete!\n\n$aiResponse'
-            : 'Prescription uploaded successfully. '
-                'Status: $status\n'
-                'A pharmacist will review and verify your prescription.';
+        _prescription = prescription;
+        _resultMessage = prescription.items.isNotEmpty
+            ? 'AI read ${prescription.items.length} medicine(s) from your prescription.\n'
+                'A pharmacist will verify before the order is final.'
+            : 'Prescription uploaded successfully (status: ${prescription.status ?? 'processing'}).\n'
+                'AI could not read medicines from it — a pharmacist will review manually.';
         _uploadSuccess = true;
       });
     } catch (e) {
@@ -112,14 +108,15 @@ class _PrescriptionUploadScreenState
   }
 
   Future<void> _buildCart() async {
-    if (_prescriptionId == null) return;
+    final prescription = _prescription;
+    if (prescription == null) return;
 
     setState(() => _buildingCart = true);
 
     try {
-      await _service.buildCartFromPrescription(
+      final unmatched = await _service.buildCartFromPrescription(
         widget.token,
-        _prescriptionId!,
+        prescription.id,
       );
 
       // Invalidate cart so it reloads with new items
@@ -127,10 +124,14 @@ class _PrescriptionUploadScreenState
 
       if (mounted) {
         scaffoldMessengerKey.currentState?.showSnackBar(
-          const SnackBar(
-            content: Text('Cart built from prescription! Check your cart.'),
+          SnackBar(
+            content: Text(
+              unmatched.isEmpty
+                  ? 'Cart built from prescription! Check your cart.'
+                  : 'Cart built, but these items need a pharmacist: ${unmatched.join(', ')}',
+            ),
             backgroundColor: teal,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
           ),
         );
         Navigator.of(context).pop();
@@ -340,8 +341,8 @@ class _PrescriptionUploadScreenState
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: !_uploadSuccess
-                        ? Colors.red.withValues(alpha:0.3)
-                        : teal.withValues(alpha:0.3),
+                        ? Colors.red.withValues(alpha: 0.3)
+                        : teal.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(
@@ -353,20 +354,14 @@ class _PrescriptionUploadScreenState
                           !_uploadSuccess
                               ? Icons.error_outline
                               : Icons.check_circle,
-                          color: !_uploadSuccess
-                              ? Colors.redAccent
-                              : teal,
+                          color: !_uploadSuccess ? Colors.redAccent : teal,
                           size: 22,
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          !_uploadSuccess
-                              ? 'Error'
-                              : 'Result',
+                          !_uploadSuccess ? 'Error' : 'Result',
                           style: TextStyle(
-                            color: !_uploadSuccess
-                                ? Colors.redAccent
-                                : teal,
+                            color: !_uploadSuccess ? Colors.redAccent : teal,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
@@ -377,7 +372,7 @@ class _PrescriptionUploadScreenState
                     Text(
                       _resultMessage!,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha:0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 14,
                         height: 1.5,
                       ),
@@ -386,9 +381,15 @@ class _PrescriptionUploadScreenState
                 ),
               ),
             ],
-
+            
+            // ── AI-extracted items + safety flags ──
+            if (_prescription != null && _uploadSuccess) ...[
+              const SizedBox(height: 16),
+              _ExtractionCard(prescription: _prescription!),
+            ],
+            
             // ── Build Cart button ──
-            if (_prescriptionId != null && _uploadSuccess) ...[
+            if (_prescription != null && _uploadSuccess) ...[
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
@@ -566,9 +567,9 @@ class _DialogOption extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: teal.withValues(alpha:0.08),
+          color: teal.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: teal.withValues(alpha:0.25)),
+          border: Border.all(color: teal.withValues(alpha: 0.25)),
         ),
         child: Column(
           children: [
@@ -584,6 +585,199 @@ class _DialogOption extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Shows the AI-extracted medicine lines and the copilot safety flags
+/// (duplicate ingredients / drug interactions) for one prescription.
+class _ExtractionCard extends StatelessWidget {
+  const _ExtractionCard({required this.prescription});
+
+  final Prescription prescription;
+
+  static const Color cardColor = Color(0xFF09243D);
+  static const Color teal = Color(0xFF00C9A7);
+  static const Color muted = Color(0xFF9AAEC3);
+  static const Color border = Color(0xFF1D3C5B);
+  static const Color error = Color(0xFFB8404A);
+
+  @override
+  Widget build(BuildContext context) {
+    final highRisk = prescription.hasHighRisk;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: highRisk ? error.withValues(alpha: 0.5) : teal.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: teal, size: 18),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'AI Extraction & Safety Check',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              _statusBadge(prescription.status),
+            ],
+          ),
+          if (prescription.doctorName?.isNotEmpty ?? false)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Doctor: ${prescription.doctorName}',
+                style: const TextStyle(color: muted, fontSize: 12),
+              ),
+            ),
+          const SizedBox(height: 12),
+          ...prescription.items.map(_itemTile),
+          ...prescription.riskFlags.map(_riskFlag),
+          if (prescription.riskFlags.isEmpty && prescription.items.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.verified_outlined, color: teal.withValues(alpha: 0.8), size: 15),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'No duplicate-ingredient or interaction flags found.',
+                    style: TextStyle(color: muted, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusBadge(String? status) {
+    final color = switch (status) {
+      'verified' => Colors.green,
+      'needs_review' => Colors.orange,
+      'rejected' => error,
+      'processing' => Colors.lightBlueAccent,
+      _ => muted,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        (status ?? 'unknown').replaceAll('_', ' ').toUpperCase(),
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+
+  Widget _itemTile(PrescriptionItem item) {
+    final confidence = item.confidence;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF061A33).withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  item.displayName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (item.isAmbiguous)
+                _chip('Check name', Colors.orange)
+              else if (confidence != null)
+                _chip('${(confidence * 100).round()}%', teal),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            [
+              if (item.dosage?.isNotEmpty ?? false) 'Dose: ${item.dosage}',
+              if (item.frequency?.isNotEmpty ?? false) 'Freq: ${item.frequency}',
+              if (item.duration?.isNotEmpty ?? false) 'Dur: ${item.duration}',
+              if (item.quantity != null) 'Qty: ${item.quantity}',
+            ].join('  ·  '),
+            style: const TextStyle(color: muted, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget _riskFlag(PrescriptionRiskFlag flag) {
+    final color = flag.isHigh ? error : Colors.orange;
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                flag.type == 'duplicate' ? Icons.content_copy : Icons.warning_amber,
+                color: color,
+                size: 15,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  flag.title,
+                  style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),          const SizedBox(height: 4),
+          Text(flag.message, style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4)),
+        ],
       ),
     );
   }

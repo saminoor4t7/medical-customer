@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 class AppUrls {
   static String get baseUrl {
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://192.168.1.8:8000';
+      return 'http://192.168.1.7:8000';
     }
     return 'http://127.0.0.1:8000';
   }
@@ -29,6 +29,9 @@ class AppUrls {
 
   // AI Prescription
   static String get prescriptions => '$baseUrl/customer/prescriptions/';
+  static String prescriptionDetail(int id) => '$baseUrl/customer/prescriptions/$id/';
+  static String prescriptionBuildCart(int id) =>
+      '$baseUrl/customer/prescriptions/$id/build-cart/';
 
   // Orders
   static String ordersList() => '$baseUrl/orders/';
@@ -39,8 +42,10 @@ class AppUrls {
   static String pharmacyInventory(int pharmacyId) =>
       '$baseUrl/pharmacy/$pharmacyId/inventory/';
 
-  // AI Agent
-  static String get aiChat => '$baseUrl/ai/agent/chat/';
-  static String get aiSearch => '$baseUrl/ai/agent/search/';
-  static String get aiHealth => '$baseUrl/ai/agent/health/';
+  // AI Assistant (Panda AI)
+  static String get aiChat => '$baseUrl/ai/chat/';
+  static String get aiConversations =>
+      '$baseUrl/ai/assistant/conversations/';
+  static String aiConversationDetail(int id) =>
+      '$baseUrl/ai/assistant/conversations/$id/';
 }

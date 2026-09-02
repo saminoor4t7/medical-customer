@@ -40,14 +40,14 @@ class _CustomerShellState extends State<CustomerShell> {
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: pages),
       floatingActionButton: FloatingActionButton(
-        tooltip: 'AI Health Assistant',
+        tooltip: 'Panda AI Assistant',
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => AIChatScreen(token: widget.accessToken),
           ),
         ),
         backgroundColor: const Color(0xFF00C9A7),
-        child: const Icon(Icons.chat, color: Color(0xFF061A33), size: 26),
+        child: const Icon(Icons.smart_toy, color: Color(0xFF061A33), size: 26),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,

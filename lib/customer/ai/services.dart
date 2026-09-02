@@ -5,78 +5,114 @@ import 'package:http/http.dart' as http;
 
 import '../../core/app_urls.dart';
 import '../../core/session_recovery.dart';
+import 'model.dart';
 
+/// Client for the Panda AI assistant backend (`apps/ai_assistant`).
 class AIService {
   AIService({http.Client? client}) : _client = client ?? http.Client();
   final http.Client _client;
 
-  /// Send a chat message to the AI agent.
-  /// Returns the full response (session_id + AI reply + matched medicines).
-  Future<Map<String, dynamic>> sendMessage(
+  /// Send a chat message and get the AI reply with any tool actions.
+  /// Gemini may chain several tool calls, so allow a generous timeout.
+  Future<AIChatResult> sendMessage(
     String token, {
     required String message,
-    int? sessionId,
-    List<int>? imageBytes,
-    String? imageFilename,
+    int? conversationId,
   }) async {
-    final uri = Uri.parse(AppUrls.aiChat);
-    final request = http.MultipartRequest('POST', uri)
-      ..headers['Authorization'] = 'Bearer $token'
-      ..fields['message'] = message;
+    final response = await _client
+        .post(
+          Uri.parse(AppUrls.aiChat),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'message': message,
+            'conversation_id': ?conversationId,
+          }),
+        )
+        .timeout(const Duration(seconds: 90));
 
-    if (sessionId != null) {
-      request.fields['session_id'] = sessionId.toString();
-    }
-
-    if (imageBytes != null && imageBytes.isNotEmpty) {
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          'image',
-          imageBytes,
-          filename: imageFilename ?? 'prescription.jpg',
-        ),
-      );
-    }
-
-    final streamed = await request.send().timeout(const Duration(seconds: 30));
-    final response = await http.Response.fromStream(streamed);
-
-    if (kDebugMode) {
-      debugPrint('[AI] POST ${AppUrls.aiChat} → ${response.statusCode}');
-      debugPrint('[AI] Response: ${response.body.length > 500 ? response.body.substring(0, 500) : response.body}');
-    }
+    _log('POST ${AppUrls.aiChat}', response.statusCode, response.body);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       if (response.statusCode == 401) handleUnauthorized();
       throw AIException(response.statusCode, response.body);
     }
 
-    return Map<String, dynamic>.from(
-      jsonDecode(response.body) as Map,
+    return AIChatResult.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
     );
   }
 
-  /// Semantic medicine search (no chat session).
-  Future<Map<String, dynamic>> searchMedicines(
-    String token, {
-    required String query,
-    int topK = 5,
-  }) async {
-    final response = await _client.post(
-      Uri.parse(AppUrls.aiSearch),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'query': query, 'top_k': topK}),
-    );
+  /// List the customer's past conversations (newest first).
+  Future<List<AIConversation>> listConversations(String token) async {
+    final response = await _client
+        .get(
+          Uri.parse(AppUrls.aiConversations),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 30));
+
+    _log('GET ${AppUrls.aiConversations}', response.statusCode, response.body);
+
     if (response.statusCode < 200 || response.statusCode >= 300) {
       if (response.statusCode == 401) handleUnauthorized();
       throw AIException(response.statusCode, response.body);
     }
-    return Map<String, dynamic>.from(
-      jsonDecode(response.body) as Map,
+
+    final decoded = jsonDecode(response.body);
+    // DRF pagination wraps the list in {count, results: [...]}; the list
+    // endpoint may also return a bare array.
+    final raw = decoded is Map ? decoded['results'] : decoded;
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((m) => AIConversation.fromJson(Map<String, dynamic>.from(m)))
+        .toList();
+  }
+
+  /// Fetch one conversation with its full message history.
+  Future<AIConversationDetail> getConversation(String token, int id) async {
+    final url = AppUrls.aiConversationDetail(id);
+    final response = await _client
+        .get(Uri.parse(url), headers: {'Authorization': 'Bearer $token'})
+        .timeout(const Duration(seconds: 30));
+
+    _log('GET $url', response.statusCode, response.body);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode == 401) handleUnauthorized();
+      throw AIException(response.statusCode, response.body);
+    }
+
+    return AIConversationDetail.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
     );
+  }
+
+  /// Delete a conversation.
+  Future<void> deleteConversation(String token, int id) async {
+    final url = AppUrls.aiConversationDetail(id);
+    final response = await _client
+        .delete(Uri.parse(url), headers: {'Authorization': 'Bearer $token'})
+        .timeout(const Duration(seconds: 30));
+
+    _log('DELETE $url', response.statusCode, response.body);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode == 401) handleUnauthorized();
+      throw AIException(response.statusCode, response.body);
+    }
+  }
+
+  void _log(String request, int statusCode, String body) {
+    if (kDebugMode) {
+      debugPrint('[AI] $request → $statusCode');
+      debugPrint(
+        '[AI] Body: ${body.length > 400 ? body.substring(0, 400) : body}',
+      );
+    }
   }
 }
 
