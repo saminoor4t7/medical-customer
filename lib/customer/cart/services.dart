@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../core/app_urls.dart';
+import '../../core/session_recovery.dart';
 import 'model.dart';
 
 class CartService {
@@ -76,6 +77,7 @@ class CartService {
 
   void _check(http.Response response) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode == 401) handleUnauthorized();
       throw CartApiException(
         statusCode: response.statusCode,
         body: response.body,

@@ -5,6 +5,7 @@ class CustomerProfile {
     required this.walletBalance,
     required this.preferredLanguage,
     required this.addresses,
+    this.dateOfBirth,
   });
 
   final int id;
@@ -12,6 +13,7 @@ class CustomerProfile {
   final String walletBalance;
   final String preferredLanguage;
   final List<CustomerAddress> addresses;
+  final DateTime? dateOfBirth;
 
   factory CustomerProfile.fromJson(Map<String, dynamic> json) {
     final rawAddresses = json['addresses'];
@@ -20,6 +22,7 @@ class CustomerProfile {
       user: _toInt(json['user']),
       walletBalance: json['wallet_balance']?.toString() ?? '0.00',
       preferredLanguage: json['preferred_language']?.toString() ?? 'en',
+      dateOfBirth: DateTime.tryParse(json['date_of_birth']?.toString() ?? ''),
       addresses: rawAddresses is List
           ? rawAddresses
                 .whereType<Map>()

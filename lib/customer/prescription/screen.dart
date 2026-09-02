@@ -65,8 +65,7 @@ class _PrescriptionUploadScreenState
       final fileName = _selectedImage!.path.split(Platform.pathSeparator).last;
 
       // Get selected pharmacy or prompt user
-      final selectedNotifier = ref.read(selectedPharmacyProvider);
-      int? pharmacyId = selectedNotifier.value;
+      int? pharmacyId = ref.read(selectedPharmacyProvider);
 
       if (pharmacyId == null) {
         pharmacyId = autoSelectPharmacy(ref);
@@ -219,7 +218,7 @@ class _PrescriptionUploadScreenState
                   color: cardColor,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: teal.withOpacity(0.3),
+                    color: teal.withValues(alpha:0.3),
                     style: BorderStyle.solid,
                   ),
                 ),
@@ -235,7 +234,7 @@ class _PrescriptionUploadScreenState
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: teal.withOpacity(0.10),
+                              color: teal.withValues(alpha:0.10),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -299,7 +298,7 @@ class _PrescriptionUploadScreenState
                 style: FilledButton.styleFrom(
                   backgroundColor: teal,
                   foregroundColor: navy,
-                  disabledBackgroundColor: teal.withOpacity(0.3),
+                  disabledBackgroundColor: teal.withValues(alpha:0.3),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -341,8 +340,8 @@ class _PrescriptionUploadScreenState
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: !_uploadSuccess
-                        ? Colors.red.withOpacity(0.3)
-                        : teal.withOpacity(0.3),
+                        ? Colors.red.withValues(alpha:0.3)
+                        : teal.withValues(alpha:0.3),
                   ),
                 ),
                 child: Column(
@@ -378,7 +377,7 @@ class _PrescriptionUploadScreenState
                     Text(
                       _resultMessage!,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha:0.85),
                         fontSize: 14,
                         height: 1.5,
                       ),
@@ -525,7 +524,7 @@ class _SourceButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: teal.withOpacity(0.25)),
+          border: Border.all(color: teal.withValues(alpha:0.25)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -567,9 +566,9 @@ class _DialogOption extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: teal.withOpacity(0.08),
+          color: teal.withValues(alpha:0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: teal.withOpacity(0.25)),
+          border: Border.all(color: teal.withValues(alpha:0.25)),
         ),
         child: Column(
           children: [

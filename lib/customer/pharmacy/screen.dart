@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import 'provider.dart';
 
 class PharmacyScreen extends ConsumerWidget {
-  const PharmacyScreen({super.key});
+  const PharmacyScreen({this.popOnSelect = false, super.key});
+
+  /// When true, tapping a pharmacy pops the screen and returns the pharmacy ID.
+  /// Use this when opening the screen as a picker.
+  final bool popOnSelect;
 
   static const Color navy = Color(0xFF061A33);
   static const Color cardColor = Color(0xFF09243D);
@@ -15,13 +18,14 @@ class PharmacyScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pharmaciesAsync = ref.watch(pharmaciesProvider);
+    final selectedId = ref.watch(selectedPharmacyProvider);
 
     return Scaffold(
       backgroundColor: navy,
       appBar: AppBar(
         backgroundColor: navy,
         foregroundColor: Colors.white,
-        title: const Text('Pharmacies'),
+        title: Text(popOnSelect ? 'Select Pharmacy' : 'Pharmacies'),
       ),
       body: pharmaciesAsync.when(
         loading: () => const Center(
@@ -46,58 +50,70 @@ class PharmacyScreen extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: pharmacies.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (_, i) {
               final p = pharmacies[i];
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: teal.withOpacity(0.2)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: teal.withOpacity(0.1),
-                      ),
-                      child: const Icon(
-                        Icons.local_pharmacy,
-                        color: teal,
-                        size: 24,
-                      ),
+              final isSelected = p.id == selectedId;
+              return GestureDetector(
+                onTap: () => _select(context, ref, p.id),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? teal : teal.withValues(alpha: 0.2),
+                      width: isSelected ? 2 : 1,
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            p.businessName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            p.city ?? p.addressLine ?? '',
-                            style: const TextStyle(
-                              color: muted,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: teal.withValues(alpha: 0.1),
+                        ),
+                        child: const Icon(
+                          Icons.local_pharmacy,
+                          color: teal,
+                          size: 24,
+                        ),
                       ),
-                    ),
-                    if (p.isVerified)
-                      const Icon(Icons.verified, color: teal, size: 20),
-                  ],
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              p.businessName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              p.city ?? p.addressLine ?? '',
+                              style: const TextStyle(
+                                color: muted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (p.isVerified)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Icon(Icons.verified, color: teal, size: 20),
+                        ),
+                      if (isSelected)
+                        const Icon(Icons.check_circle, color: teal, size: 24),
+                    ],
+                  ),
                 ),
               );
             },
@@ -105,5 +121,12 @@ class PharmacyScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  void _select(BuildContext context, WidgetRef ref, int id) {
+    ref.read(selectedPharmacyProvider.notifier).select(id);
+    if (popOnSelect && context.mounted) {
+      Navigator.of(context).pop(id);
+    }
   }
 }

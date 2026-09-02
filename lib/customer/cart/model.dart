@@ -36,7 +36,7 @@ class Cart {
   }
 
   double get calculatedTotal =>
-      items.fold(0, (sum, item) => sum + item.lineTotal);
+      items.fold<double>(0, (sum, item) => sum + (item.lineTotal ?? 0));
 }
 
 class CartItem {
@@ -46,7 +46,9 @@ class CartItem {
     required this.name,
     required this.quantity,
     required this.unitPrice,
+    this.lineTotal,
     this.imageUrl,
+    this.discountPercentage,
   });
 
   final int id;
@@ -54,40 +56,40 @@ class CartItem {
   final String name;
   final int quantity;
   final double unitPrice;
+  final double? lineTotal;
   final String? imageUrl;
+  final double? discountPercentage;
 
-  double get lineTotal => unitPrice * quantity;
+  double get totalPrice => lineTotal ?? unitPrice * quantity;
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
-    final product = json['product'] is Map
-        ? Map<String, dynamic>.from(json['product'] as Map)
+    final medicine = json['medicine'] is Map
+        ? Map<String, dynamic>.from(json['medicine'] as Map)
         : <String, dynamic>{};
+    final resolvedName =
+        json['name']?.toString() ??
+        json['product_name']?.toString() ??
+        medicine['name']?.toString() ??
+        'Product';
+    final resolvedImage =
+        json['image']?.toString() ??
+        json['image_url']?.toString() ??
+        medicine['image']?.toString();
     return CartItem(
       id: _int(json['id']),
       productId: _int(
-        json['product_id'] ?? json['medicine_id'] ?? product['id'],
+        json['product_id'] ?? json['medicine_id'] ?? medicine['id'],
       ),
-      name:
-          (json['name'] ??
-                  json['product_name'] ??
-                  product['name'] ??
-                  (json['medicine'] is Map
-                      ? (json['medicine'] as Map)['name']
-                      : null) ??
-                  'Product')
-              .toString(),
+      name: resolvedName,
       quantity: _int(json['quantity'], fallback: 1),
       unitPrice: _number(
-        json['unit_price'] ?? json['price'] ?? product['price'],
+        json['unit_price'] ?? json['price'] ?? medicine['price'],
       ),
-      imageUrl:
-          (json['image'] ??
-                  json['image_url'] ??
-                  product['image'] ??
-                  (json['medicine'] is Map
-                      ? (json['medicine'] as Map)['image']
-                      : null))
-              ?.toString(),
+      lineTotal: json['line_total'] != null ? _number(json['line_total']) : null,
+      imageUrl: resolvedImage,
+      discountPercentage: json['discount_percentage'] != null
+          ? _number(json['discount_percentage'])
+          : null,
     );
   }
 }
@@ -100,6 +102,7 @@ class CartQuantityRequest {
 
 int _int(Object? value, {int fallback = 0}) =>
     value is num ? value.toInt() : int.tryParse('$value') ?? fallback;
+
 double _number(Object? value) {
   if (value == null) return 0.0;
   if (value is num) return value.toDouble();

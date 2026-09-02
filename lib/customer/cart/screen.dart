@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../address/provider.dart';
 import '../address/screen.dart';
 import '../orders/place_order_screen.dart';
+import '../pharmacy/provider.dart';
+import '../pharmacy/screen.dart';
 import 'model.dart';
 import 'provider.dart';
 
@@ -69,6 +71,11 @@ class CartScreen extends ConsumerWidget {
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         const SizedBox(height: 10),
+
+                        // Pharmacy
+                        const _PharmacyBar(),
+
+                        const SizedBox(height: 12),
 
                         // Delivery
                         _DeliveryCard(token: token),
@@ -293,10 +300,89 @@ class _CircleButton extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: const Color(0xFF09243D),
-            border: Border.all(color: const Color(0xFF00A99A).withOpacity(.45)),
+            border: Border.all(color: const Color(0xFF00A99A).withValues(alpha:.45)),
           ),
           child: Icon(icon, color: Colors.white, size: 23),
         ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// PHARMACY BAR
+// ============================================================
+
+class _PharmacyBar extends ConsumerWidget {
+  const _PharmacyBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedId = ref.watch(selectedPharmacyProvider);
+    final pharmaciesAsync = ref.watch(pharmaciesProvider);
+
+    final name = pharmaciesAsync.maybeWhen(
+      data: (pharmacies) {
+        final matches = pharmacies.where((p) => p.id == selectedId).toList();
+        return matches.isNotEmpty ? matches.first.businessName : null;
+      },
+      orElse: () => null,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: CartScreen.cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: CartScreen.teal.withValues(alpha: .35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.local_pharmacy_outlined,
+            color: CartScreen.teal,
+            size: 22,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ordering from',
+                  style: const TextStyle(color: CartScreen.muted, fontSize: 12),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  name ?? 'No pharmacy selected',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const PharmacyScreen(popOnSelect: true),
+                ),
+              );
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: CartScreen.teal,
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text('Change'),
+          ),
+        ],
       ),
     );
   }
@@ -320,7 +406,7 @@ class _DeliveryCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: CartScreen.cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF087F79).withOpacity(.45)),
+        border: Border.all(color: const Color(0xFF087F79).withValues(alpha:.45)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,7 +416,7 @@ class _DeliveryCard extends ConsumerWidget {
             height: 45,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: CartScreen.teal.withOpacity(.10),
+              color: CartScreen.teal.withValues(alpha:.10),
             ),
             child: const Icon(
               Icons.location_on_outlined,
@@ -505,7 +591,7 @@ class _CartItemTile extends ConsumerWidget {
       decoration: BoxDecoration(
         color: CartScreen.cardColor,
         borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: const Color(0xFF0B5061).withOpacity(.55)),
+        border: Border.all(color: const Color(0xFF0B5061).withValues(alpha:.55)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -722,7 +808,7 @@ class _SavingsCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(.12),
+              color: Colors.white.withValues(alpha:.12),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.percent, color: Colors.white),

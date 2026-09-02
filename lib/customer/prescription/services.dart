@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../core/app_urls.dart';
+import '../../core/session_recovery.dart';
 
 class PrescriptionService {
   PrescriptionService({http.Client? client})
@@ -38,6 +39,7 @@ class PrescriptionService {
     final response = await http.Response.fromStream(streamedResponse);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode == 401) handleUnauthorized();
       throw PrescriptionApiException(response.statusCode, response.body);
     }
 
@@ -48,17 +50,21 @@ class PrescriptionService {
     String token,
     int prescriptionId,
   ) async {
+    // Backend links a prescription to the cart via PATCH /customer/cart/.
+    // It does not auto-create cart items from the AI response.
     final response = await _client
-        .post(
-          Uri.parse(AppUrls.prescriptionBuildCart(prescriptionId)),
+        .patch(
+          Uri.parse(AppUrls.cart),
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
           },
+          body: jsonEncode({'prescription_id': prescriptionId}),
         )
         .timeout(const Duration(seconds: 20));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode == 401) handleUnauthorized();
       throw PrescriptionApiException(response.statusCode, response.body);
     }
 
@@ -72,6 +78,7 @@ class PrescriptionService {
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode == 401) handleUnauthorized();
       throw PrescriptionApiException(response.statusCode, response.body);
     }
 

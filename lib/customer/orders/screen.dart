@@ -16,7 +16,7 @@ class OrdersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final orders = ref.watch(ordersProvider(token));
+    final ordersAsync = ref.watch(ordersProvider(token));
     return Scaffold(
       backgroundColor: navy,
       appBar: AppBar(
@@ -24,21 +24,36 @@ class OrdersScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         title: const Text('Orders'),
       ),
-      body: ValueListenableBuilder<List<PlacedOrder>>(
-        valueListenable: orders,
-        builder: (context, items, _) {
-          if (items.isEmpty) {
-            return const Center(
-              child: Text('No orders yet.', style: TextStyle(color: muted)),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (_, index) => _OrderCard(order: items[index]),
-          );
+      body: RefreshIndicator(
+        color: teal,
+        backgroundColor: card,
+        onRefresh: () async {
+          ref.invalidate(ordersProvider(token));
         },
+        child: ordersAsync.when(
+          loading: () =>
+              const Center(child: CircularProgressIndicator(color: teal)),
+          error: (error, _) => _ErrorView(
+            message: error.toString(),
+            onRetry: () => ref.invalidate(ordersProvider(token)),
+          ),
+          data: (items) {
+            if (items.isEmpty) {
+              return const Center(
+                child: Text(
+                  'No orders yet.',
+                  style: TextStyle(color: muted),
+                ),
+              );
+            }
+            return ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: items.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (_, index) => _OrderCard(order: items[index]),
+            );
+          },
+        ),
       ),
     );
   }
@@ -53,7 +68,9 @@ class _OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final summary = order.items.isEmpty
         ? 'Order items'
-        : order.items.map((item) => '${item.quantity} item(s)').join(', ');
+        : order.items
+            .map((item) => '${item.quantity} x ${item.medicineName}')
+            .join(', ');
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -105,6 +122,47 @@ class _OrderCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: Colors.redAccent,
+              size: 55,
+            ),
+            const SizedBox(height: 14),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: OrdersScreen.muted),
+            ),
+            const SizedBox(height: 18),
+            FilledButton(
+              onPressed: onRetry,
+              style: FilledButton.styleFrom(
+                backgroundColor: OrdersScreen.teal,
+                foregroundColor: OrdersScreen.navy,
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     );
   }

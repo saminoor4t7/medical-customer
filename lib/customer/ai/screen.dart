@@ -116,8 +116,8 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primary.withOpacity(0.12),
-                border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                color: AppTheme.primary.withValues(alpha:0.12),
+                border: Border.all(color: AppTheme.primary.withValues(alpha:0.3)),
               ),
               child: const Icon(Icons.auto_awesome, color: AppTheme.primary, size: 38),
             ),
@@ -146,14 +146,14 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         itemCount: _quickPrompts.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, i) => ActionChip(
           label: Text(
             _quickPrompts[i],
             style: const TextStyle(color: AppTheme.primary, fontSize: 12),
           ),
           backgroundColor: AppTheme.cardColor,
-          side: BorderSide(color: AppTheme.primary.withOpacity(0.3)),
+          side: BorderSide(color: AppTheme.primary.withValues(alpha:0.3)),
           onPressed: () {
             _controller.text = _quickPrompts[i];
             _send();
@@ -177,7 +177,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primary.withOpacity(0.15),
+                color: AppTheme.primary.withValues(alpha:0.15),
               ),
               child: const Icon(Icons.auto_awesome, color: AppTheme.primary, size: 16),
             ),
@@ -211,7 +211,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                     Text(
                       'Matched Medicines / دوائیں:',
                       style: TextStyle(
-                        color: isUser ? AppTheme.background.withOpacity(0.7) : AppTheme.mutedText,
+                        color: isUser ? AppTheme.background.withValues(alpha:0.7) : AppTheme.mutedText,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
@@ -230,7 +230,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primary.withOpacity(0.15),
+                color: AppTheme.primary.withValues(alpha:0.15),
               ),
               child: const Icon(Icons.person, color: AppTheme.primary, size: 16),
             ),
@@ -253,9 +253,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: AppTheme.background.withOpacity(0.4),
+          color: AppTheme.background.withValues(alpha:0.4),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppTheme.primary.withOpacity(0.25)),
+          border: Border.all(color: AppTheme.primary.withValues(alpha:0.25)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -293,7 +293,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
       decoration: BoxDecoration(
         color: AppTheme.cardColor,
-        border: Border(top: BorderSide(color: AppTheme.primary.withOpacity(0.15))),
+        border: Border(top: BorderSide(color: AppTheme.primary.withValues(alpha:0.15))),
       ),
       child: Row(
         children: [
@@ -357,7 +357,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
             message: text,
             sessionId: _sessionId,
           );
-      if (result['session_id'] is int) _sessionId = result['session_id'];
+      final newSessionId = result['session_id'] is int ? result['session_id'] as int : _sessionId;
       final reply = result['response']?.toString() ??
           result['reply']?.toString() ??
           result['content']?.toString() ??
@@ -374,11 +374,17 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
           }
         }
       }
+      if (!mounted) return;
       setState(() {
+        _sessionId = newSessionId;
+        _sending = false;
         _messages.add(_ChatBubble(role: 'assistant', content: reply, medicines: medicines));
       });
+      _scrollDown();
     } catch (e) {
+      if (!mounted) return;
       setState(() {
+        _sending = false;
         _messages.add(const _ChatBubble(
           role: 'assistant',
           content: 'Sorry, I encountered an error. Please try again.\nمعذرت، دوبارہ کوشش کریں۔',
@@ -390,11 +396,6 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
           backgroundColor: AppTheme.error,
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() => _sending = false);
-        _scrollDown();
-      }
     }
   }
 

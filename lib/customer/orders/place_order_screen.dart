@@ -7,7 +7,6 @@ import '../cart/model.dart';
 import '../cart/provider.dart';
 import 'provider.dart';
 import 'model.dart';
-import 'place_order_provider.dart';
 
 class PlaceOrderScreen extends ConsumerStatefulWidget {
   const PlaceOrderScreen({required this.token, required this.cart, super.key});
@@ -227,8 +226,7 @@ class _PlaceOrderScreenState extends ConsumerState<PlaceOrderScreen> {
           .read(placeOrderControllerProvider)
           .place(widget.token, PlaceOrderRequest(addressId: addressId));
       ref.invalidate(cartProvider(widget.token));
-      final orders = ref.read(ordersProvider(widget.token));
-      orders.value = [order, ...orders.value];
+      ref.invalidate(ordersProvider(widget.token));
       if (!mounted) return;
       await showDialog<void>(
         context: context,

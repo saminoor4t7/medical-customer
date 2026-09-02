@@ -8,7 +8,6 @@ class AIMessage {
     this.intent,
     this.confidence,
   });
-
   final String role; // 'user' or 'assistant'
   final String content;
   final List<Medicine> medicines;

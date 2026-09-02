@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 class AppUrls {
   static String get baseUrl {
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://192.168.1.7:8000';
+      return 'http://192.168.1.8:8000';
     }
     return 'http://127.0.0.1:8000';
   }
@@ -12,6 +12,7 @@ class AppUrls {
   static String get register => '$baseUrl/accounts/register/';
   static String get otp => '$baseUrl/accounts/register/verify/';
   static String get logout => '$baseUrl/accounts/logout/';
+  static String get tokenRefresh => '$baseUrl/auth/token/refresh/';
   static String get customerMe => '$baseUrl/customer/me/';
   static String get customerAddresses => '$baseUrl/customer/addresses/';
   static String get cart => '$baseUrl/customer/cart/';
@@ -28,8 +29,6 @@ class AppUrls {
 
   // AI Prescription
   static String get prescriptions => '$baseUrl/customer/prescriptions/';
-  static String prescriptionBuildCart(int id) =>
-      '$baseUrl/customer/prescriptions/$id/build-cart/';
 
   // Orders
   static String ordersList() => '$baseUrl/orders/';
@@ -41,7 +40,7 @@ class AppUrls {
       '$baseUrl/pharmacy/$pharmacyId/inventory/';
 
   // AI Agent
-  static String get aiChat => '$baseUrl/ai/chat/';
-  static String get aiSearch => '$baseUrl/ai/search/';
-  static String get aiHealth => '$baseUrl/ai/health/';
+  static String get aiChat => '$baseUrl/ai/agent/chat/';
+  static String get aiSearch => '$baseUrl/ai/agent/search/';
+  static String get aiHealth => '$baseUrl/ai/agent/health/';
 }

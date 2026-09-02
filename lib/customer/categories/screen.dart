@@ -51,7 +51,7 @@ class CategoriesScreen extends ConsumerWidget {
                       Text(
                         'Browse medicines by category',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.6),
+                          color: Colors.white.withValues(alpha:0.6),
                           fontSize: 15,
                         ),
                       ),
@@ -205,7 +205,7 @@ class _CategoryCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: teal.withOpacity(0.20)),
+          border: Border.all(color: teal.withValues(alpha:0.20)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -215,7 +215,7 @@ class _CategoryCard extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: teal.withOpacity(0.10),
+                color: teal.withValues(alpha:0.10),
                 shape: BoxShape.circle,
               ),
               child: category.image != null && category.image!.isNotEmpty
@@ -223,7 +223,7 @@ class _CategoryCard extends StatelessWidget {
                       child: Image.network(
                         category.image!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
+                        errorBuilder: (_, _, _) => Icon(
                           _getIcon(),
                           color: teal,
                           size: 30,
@@ -279,7 +279,7 @@ class _CategoryCard extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: teal.withOpacity(0.10),
+                  color: teal.withValues(alpha:0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -379,7 +379,7 @@ class _CategoryMedicinesScreen extends ConsumerWidget {
                       color: cardColor,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: const Color(0xFF0B5061).withOpacity(0.4),
+                        color: const Color(0xFF0B5061).withValues(alpha:0.4),
                       ),
                     ),
                     child: Row(
@@ -397,7 +397,7 @@ class _CategoryMedicinesScreen extends ConsumerWidget {
                                   child: Image.network(
                                     med.image!,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const Icon(
+                                    errorBuilder: (_, _, _) => const Icon(
                                       Icons.medication_outlined,
                                       color: teal,
                                       size: 28,

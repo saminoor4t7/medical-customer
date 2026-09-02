@@ -24,6 +24,8 @@ class PlacedOrder {
     required this.discount,
     required this.total,
     required this.items,
+    this.pharmacyName,
+    this.deliveryAddress,
   });
 
   final int id;
@@ -35,6 +37,8 @@ class PlacedOrder {
   final double discount;
   final double total;
   final List<PlacedOrderItem> items;
+  final String? pharmacyName;
+  final String? deliveryAddress;
 
   factory PlacedOrder.fromJson(Object? value) {
     final json = value is Map
@@ -56,20 +60,58 @@ class PlacedOrder {
                 .map((item) => PlacedOrderItem.fromJson(item))
                 .toList()
           : const [],
+      pharmacyName: _nestedName(json['pharmacy']),
+      deliveryAddress: _nestedAddress(json['delivery_address']),
     );
   }
 }
 
 class PlacedOrderItem {
-  const PlacedOrderItem({required this.quantity, required this.lineTotal});
+  const PlacedOrderItem({
+    required this.quantity,
+    required this.lineTotal,
+    this.medicineName,
+    this.unitPrice,
+  });
 
   final int quantity;
   final double lineTotal;
+  final String? medicineName;
+  final double? unitPrice;
 
-  factory PlacedOrderItem.fromJson(Map item) => PlacedOrderItem(
-    quantity: _int(item['quantity']),
-    lineTotal: _number(item['line_total']),
-  );
+  factory PlacedOrderItem.fromJson(Map item) {
+    final medicine = item['medicine'] is Map
+        ? Map<String, dynamic>.from(item['medicine'] as Map)
+        : null;
+    return PlacedOrderItem(
+      quantity: _int(item['quantity']),
+      lineTotal: _number(item['line_total']),
+      medicineName:
+          medicine?['name']?.toString() ?? item['medicine_name']?.toString(),
+      unitPrice: item['unit_price'] != null ? _number(item['unit_price']) : null,
+    );
+  }
+}
+
+String? _nestedName(Object? value) {
+  if (value is Map) {
+    final map = Map<String, dynamic>.from(value);
+    return map['business_name']?.toString() ?? map['username']?.toString();
+  }
+  return null;
+}
+
+String? _nestedAddress(Object? value) {
+  if (value is Map) {
+    final map = Map<String, dynamic>.from(value);
+    final parts = <String>[
+      map['label']?.toString() ?? '',
+      map['address_line']?.toString() ?? '',
+      map['city']?.toString() ?? '',
+    ].where((s) => s.isNotEmpty).toList();
+    return parts.isEmpty ? null : parts.join(' • ');
+  }
+  return null;
 }
 
 int _int(Object? value) =>

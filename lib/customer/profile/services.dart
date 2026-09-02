@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:mediacl_panda/customer/profile/model.dart';
 
 import '../../core/app_urls.dart';
+import '../../core/session_recovery.dart';
 
 
 class ProfileService {
@@ -39,6 +40,7 @@ class ProfileService {
 
   void _ensureSuccess(http.Response response) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode == 401) handleUnauthorized();
       throw ProfileApiException(response.statusCode, response.body);
     }
   }

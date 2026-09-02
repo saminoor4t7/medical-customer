@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/app_urls.dart';
+import '../../core/session_recovery.dart';
 
 class AIService {
   AIService({http.Client? client}) : _client = client ?? http.Client();
@@ -46,6 +47,7 @@ class AIService {
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode == 401) handleUnauthorized();
       throw AIException(response.statusCode, response.body);
     }
 
@@ -69,6 +71,7 @@ class AIService {
       body: jsonEncode({'query': query, 'top_k': topK}),
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      if (response.statusCode == 401) handleUnauthorized();
       throw AIException(response.statusCode, response.body);
     }
     return Map<String, dynamic>.from(

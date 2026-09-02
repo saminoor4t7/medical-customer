@@ -6,9 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../main.dart';
 import 'model.dart';
 import 'provider.dart';
-import '../ai/screen.dart';
 import '../cart/provider.dart';
 import '../pharmacy/provider.dart';
+import '../pharmacy/screen.dart';
 
 import '../prescription/screen.dart';
 import 'medicine_detail_screen.dart';
@@ -56,17 +56,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.watch(pharmaciesProvider); // pre-load pharmacies for auto-select
     return Scaffold(
       backgroundColor: navy,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => AIChatScreen(token: widget.token),
-            ),
-          );
-        },
-        backgroundColor: teal,
-        child: const Icon(Icons.chat, color: navy, size: 26),
-      ),
       body: SafeArea(
         child: RefreshIndicator(
           color: teal,
@@ -151,10 +140,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
           ),
-          _CircleIcon(
-            icon: Icons.notifications_none,
-            onTap: () {},
-          ),
+          _PharmacyChip(token: widget.token),
         ],
       ),
     );
@@ -172,7 +158,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF1D3C5B).withOpacity(0.5)),
+          border: Border.all(color: const Color(0xFF1D3C5B).withValues(alpha:0.5)),
         ),
         child: Row(
           children: [
@@ -240,7 +226,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha:0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -310,7 +296,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               loading: () => const Center(
                 child: CircularProgressIndicator(color: teal),
               ),
-              error: (_, __) => const Center(
+              error: (_, _) => const Center(
                 child: Text('Failed to load', style: TextStyle(color: muted)),
               ),
               data: (cats) {
@@ -322,7 +308,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 return ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: cats.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
                   itemBuilder: (_, index) =>
                       _CategoryChip(category: cats[index], token: widget.token),
                 );
@@ -488,7 +474,7 @@ class _CategoryChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: teal.withOpacity(0.25)),
+          border: Border.all(color: teal.withValues(alpha:0.25)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -497,7 +483,7 @@ class _CategoryChip extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: teal.withOpacity(0.10),
+                color: teal.withValues(alpha:0.10),
                 shape: BoxShape.circle,
               ),
               child: category.image != null && category.image!.isNotEmpty
@@ -505,7 +491,7 @@ class _CategoryChip extends StatelessWidget {
                       child: Image.network(
                         category.image!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorBuilder: (_, _, _) => const Icon(
                           Icons.medication_outlined,
                           color: teal,
                           size: 22,
@@ -552,6 +538,7 @@ class _MedicineCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final price = _resolvePrice(ref);
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
@@ -567,7 +554,7 @@ class _MedicineCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF0B5061).withOpacity(0.4)),
+          border: Border.all(color: const Color(0xFF0B5061).withValues(alpha:0.4)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -590,7 +577,7 @@ class _MedicineCard extends ConsumerWidget {
                         child: Image.network(
                           medicine.image!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _placeholderIcon(),
+                          errorBuilder: (_, _, _) => _placeholderIcon(),
                         ),
                       )
                     : _placeholderIcon(),
@@ -629,7 +616,7 @@ class _MedicineCard extends ConsumerWidget {
                     Row(
                       children: [
                         Text(
-                          'PKR ${medicine.price.toStringAsFixed(2)}',
+                          'PKR ${price.toStringAsFixed(2)}',
                           style: const TextStyle(
                             color: teal,
                             fontSize: 14,
@@ -656,9 +643,15 @@ class _MedicineCard extends ConsumerWidget {
         child: Icon(Icons.medication_outlined, color: teal, size: 38),
       );
 
+  double _resolvePrice(WidgetRef ref) {
+    return ref
+            .watch(selectedPharmacyInventoryProvider(token))
+            .value?[medicine.id] ??
+        medicine.price;
+  }
+
   Future<void> _addToCart(BuildContext context, WidgetRef ref) async {
-    final selectedNotifier = ref.read(selectedPharmacyProvider);
-    int? pharmacyId = selectedNotifier.value;
+    int? pharmacyId = ref.read(selectedPharmacyProvider);
     if (pharmacyId == null) {
       pharmacyId = autoSelectPharmacy(ref);
       if (pharmacyId == null) return;
@@ -702,8 +695,16 @@ class _MedicineListTile extends ConsumerWidget {
   static const Color teal = Color(0xFF00C9A7);
   static const Color muted = Color(0xFF9AAEC3);
 
+  double _resolvePrice(WidgetRef ref) {
+    return ref
+            .watch(selectedPharmacyInventoryProvider(token))
+            .value?[medicine.id] ??
+        medicine.price;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final price = _resolvePrice(ref);
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
@@ -721,7 +722,7 @@ class _MedicineListTile extends ConsumerWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF0B5061).withOpacity(0.4)),
+          border: Border.all(color: const Color(0xFF0B5061).withValues(alpha:0.4)),
         ),
         child: Row(
           children: [
@@ -738,7 +739,7 @@ class _MedicineListTile extends ConsumerWidget {
                       child: Image.network(
                         medicine.image!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorBuilder: (_, _, _) => const Icon(
                           Icons.medication_outlined,
                           color: teal,
                           size: 28,
@@ -775,7 +776,7 @@ class _MedicineListTile extends ConsumerWidget {
                   ],
                   const SizedBox(height: 4),
                   Text(
-                    'PKR ${medicine.price.toStringAsFixed(2)}',
+                    'PKR ${price.toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: teal,
                       fontSize: 14,
@@ -787,8 +788,7 @@ class _MedicineListTile extends ConsumerWidget {
             ),
             _AddButton(
               onTap: () async {
-                final selectedNotifier = ref.read(selectedPharmacyProvider);
-                int? pharmacyId = selectedNotifier.value;
+                int? pharmacyId = ref.read(selectedPharmacyProvider);
                 if (pharmacyId == null) {
                   pharmacyId = autoSelectPharmacy(ref);
                   if (pharmacyId == null) return;
@@ -843,9 +843,9 @@ class _AddButton extends StatelessWidget {
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: teal.withOpacity(0.12),
+          color: teal.withValues(alpha:0.12),
           shape: BoxShape.circle,
-          border: Border.all(color: teal.withOpacity(0.4)),
+          border: Border.all(color: teal.withValues(alpha:0.4)),
         ),
         child: const Icon(Icons.add, color: teal, size: 20),
       ),
@@ -854,36 +854,78 @@ class _AddButton extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────
-// PHARMACY PICKER DIALOG
+// PHARMACY SELECTOR CHIP
 // ────────────────────────────────────────────────────────────────
 
-// ────────────────────────────────────────────────────────────────
-// CIRCLE ICON
-// ────────────────────────────────────────────────────────────────
+class _PharmacyChip extends ConsumerWidget {
+  const _PharmacyChip({required this.token});
+  final String token;
 
-class _CircleIcon extends StatelessWidget {
-  const _CircleIcon({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback onTap;
+  static const Color cardColor = Color(0xFF09243D);
+  static const Color teal = Color(0xFF00C9A7);
+  static const Color muted = Color(0xFF9AAEC3);
 
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(30),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0xFF09243D),
-            border: Border.all(
-              color: const Color(0xFF00C9A7).withOpacity(0.25),
-            ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedId = ref.watch(selectedPharmacyProvider);
+    final pharmaciesAsync = ref.watch(pharmaciesProvider);
+
+    // Auto-select the first pharmacy once the list is available. The write is
+    // deferred to after the frame because provider state can't change while
+    // the widget tree is building.
+    final pharmacies = pharmaciesAsync.value;
+    final notifier = ref.read(selectedPharmacyProvider.notifier);
+    if (selectedId == null && pharmacies != null && pharmacies.isNotEmpty) {
+      final firstId = pharmacies.first.id;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => notifier.selectIfNone(firstId),
+      );
+    }
+
+    final name = pharmaciesAsync.maybeWhen(
+      data: (pharmacies) {
+        final matches = pharmacies.where((p) => p.id == selectedId).toList();
+        return matches.isNotEmpty ? matches.first.businessName : null;
+      },
+      orElse: () => null,
+    );
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const PharmacyScreen(popOnSelect: true),
           ),
-          child: Icon(icon, color: Colors.white, size: 22),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: teal.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.local_pharmacy_outlined, color: teal, size: 18),
+            const SizedBox(width: 7),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 110),
+              child: Text(
+                name ?? 'Select Pharmacy',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: name != null ? Colors.white : muted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: 3),
+            const Icon(Icons.expand_more, color: muted, size: 17),
+          ],
         ),
       ),
     );
@@ -967,8 +1009,16 @@ class _CategoryMedicineTile extends ConsumerWidget {
   static const Color cardColor = Color(0xFF09243D);
   static const Color teal = Color(0xFF00C9A7);
 
+  double _resolvePrice(WidgetRef ref) {
+    return ref
+            .watch(selectedPharmacyInventoryProvider(token))
+            .value?[medicine.id] ??
+        medicine.price;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final price = _resolvePrice(ref);
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
@@ -986,7 +1036,7 @@ class _CategoryMedicineTile extends ConsumerWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF0B5061).withOpacity(0.4)),
+          border: Border.all(color: const Color(0xFF0B5061).withValues(alpha:0.4)),
         ),
         child: Row(
           children: [
@@ -1003,7 +1053,7 @@ class _CategoryMedicineTile extends ConsumerWidget {
                       child: Image.network(
                         medicine.image!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorBuilder: (_, _, _) => const Icon(
                           Icons.medication_outlined,
                           color: teal,
                           size: 28,
@@ -1033,7 +1083,7 @@ class _CategoryMedicineTile extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'PKR ${medicine.price.toStringAsFixed(2)}',
+                    'PKR ${price.toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: teal,
                       fontSize: 14,
@@ -1045,8 +1095,7 @@ class _CategoryMedicineTile extends ConsumerWidget {
             ),
             _AddButton(
               onTap: () async {
-                final selectedNotifier = ref.read(selectedPharmacyProvider);
-                int? pharmacyId = selectedNotifier.value;
+                int? pharmacyId = ref.read(selectedPharmacyProvider);
                 if (pharmacyId == null) {
                   pharmacyId = autoSelectPharmacy(ref);
                   if (pharmacyId == null) return;
