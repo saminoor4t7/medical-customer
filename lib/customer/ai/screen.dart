@@ -52,6 +52,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
   void initState() {
     super.initState();
     _conversationId = widget.conversationId;
+    if (widget.conversationId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadConversation(widget.conversationId!);
+      });
+    }
   }
 
   @override
@@ -69,7 +74,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
         backgroundColor: AppTheme.cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.white,
+            size: 20,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Row(
@@ -80,7 +89,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppTheme.primary.withValues(alpha: 0.15),
-                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppTheme.primary.withValues(alpha: 0.3),
+                ),
               ),
               child: const Center(
                 child: Text('🐼', style: TextStyle(fontSize: 18)),
@@ -93,11 +104,18 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                 children: [
                   const Text(
                     'Panda AI',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   Text(
                     _sending ? 'Thinking...' : 'AI doctor · voice · orders',
-                    style: const TextStyle(color: AppTheme.mutedText, fontSize: 10),
+                    style: const TextStyle(
+                      color: AppTheme.mutedText,
+                      fontSize: 10,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -107,7 +125,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.phone_in_talk, color: AppTheme.primary, size: 24),
+            icon: const Icon(
+              Icons.phone_in_talk,
+              color: AppTheme.primary,
+              size: 24,
+            ),
             tooltip: 'Call Panda AI (voice)',
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -119,12 +141,20 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.history, color: AppTheme.mutedText, size: 22),
+            icon: const Icon(
+              Icons.history,
+              color: AppTheme.mutedText,
+              size: 22,
+            ),
             tooltip: 'Chat history',
             onPressed: _openHistory,
           ),
           IconButton(
-            icon: const Icon(Icons.add_comment_outlined, color: AppTheme.mutedText, size: 22),
+            icon: const Icon(
+              Icons.add_comment_outlined,
+              color: AppTheme.mutedText,
+              size: 22,
+            ),
             tooltip: 'New chat',
             onPressed: _newChat,
           ),
@@ -137,7 +167,10 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                 ? _buildWelcome()
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
                     itemCount: _messages.length + (_sending ? 1 : 0),
                     itemBuilder: (_, i) => i < _messages.length
                         ? _buildBubble(_messages[i])
@@ -164,21 +197,34 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppTheme.primary.withValues(alpha: 0.12),
-                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppTheme.primary.withValues(alpha: 0.3),
+                ),
               ),
-              child: const Center(child: Text('🐼', style: TextStyle(fontSize: 40))),
+              child: const Center(
+                child: Text('🐼', style: TextStyle(fontSize: 40)),
+              ),
             ),
             const SizedBox(height: 20),
             const Text(
               "Hi! I'm Panda, your AI medical assistant",
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800, height: 1.4),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
               'Tell me your symptoms and I\'ll suggest medicines,\ncheck prices and stock, add them to your cart\nand even place your order.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.mutedText, fontSize: 13, height: 1.6),
+              style: TextStyle(
+                color: AppTheme.mutedText,
+                fontSize: 13,
+                height: 1.6,
+              ),
             ),
           ],
         ),
@@ -226,12 +272,18 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                 const SizedBox(
                   width: 14,
                   height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppTheme.primary,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Text(
                   'Panda is thinking...',
-                  style: TextStyle(color: AppTheme.mutedText.withValues(alpha: 0.9), fontSize: 13),
+                  style: TextStyle(
+                    color: AppTheme.mutedText.withValues(alpha: 0.9),
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
@@ -258,7 +310,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[_pandaAvatar(), const SizedBox(width: 8)],
@@ -304,7 +358,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                 shape: BoxShape.circle,
                 color: AppTheme.primary.withValues(alpha: 0.15),
               ),
-              child: const Icon(Icons.person, color: AppTheme.primary, size: 16),
+              child: const Icon(
+                Icons.person,
+                color: AppTheme.primary,
+                size: 16,
+              ),
             ),
           ],
         ],
@@ -317,7 +375,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
       decoration: BoxDecoration(
         color: AppTheme.cardColor,
-        border: Border(top: BorderSide(color: AppTheme.primary.withValues(alpha: 0.15))),
+        border: Border(
+          top: BorderSide(color: AppTheme.primary.withValues(alpha: 0.15)),
+        ),
       ),
       child: Row(
         children: [
@@ -336,7 +396,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                         color: AppTheme.primary,
                       ),
                     )
-                  : const Icon(Icons.attach_file, color: AppTheme.mutedText, size: 22),
+                  : const Icon(
+                      Icons.attach_file,
+                      color: AppTheme.mutedText,
+                      size: 22,
+                    ),
             ),
           ),
           Expanded(
@@ -352,7 +416,10 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                 filled: true,
                 fillColor: Color(0xFF10354A),
                 counterText: '',
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.all(Radius.circular(28)),
                   borderSide: BorderSide.none,
@@ -376,7 +443,10 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2.5, color: AppTheme.background),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: AppTheme.background,
+                      ),
                     )
                   : const Icon(Icons.send_rounded, size: 20),
             ),
@@ -402,7 +472,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
     });
     _scrollDown();
     try {
-      final result = await ref.read(aiServiceProvider).sendMessage(
+      final result = await ref
+          .read(aiServiceProvider)
+          .sendMessage(
             widget.token,
             message: text,
             conversationId: _conversationId,
@@ -411,25 +483,33 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
       setState(() {
         _conversationId = result.conversationId ?? _conversationId;
         _sending = false;
-        _messages.add(AIChatMessage(
-          role: 'model',
-          content: result.reply,
-          actions: result.actions,
-        ));
+        _messages.add(
+          AIChatMessage(
+            role: 'model',
+            content: result.reply,
+            actions: result.actions,
+          ),
+        );
       });
       _scrollDown();
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _sending = false;
-        _messages.add(const AIChatMessage(
-          role: 'model',
-          content: "Sorry, I'm having trouble right now. Please try again.\n"
-              'معذرت، دوبارہ کوشش کریں۔',
-        ));
+        _messages.add(
+          const AIChatMessage(
+            role: 'model',
+            content:
+                "Sorry, I'm having trouble right now. Please try again.\n"
+                'معذرت، دوبارہ کوشش کریں۔',
+          ),
+        );
       });
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text('AI error: ${e.toString()}'), backgroundColor: AppTheme.error),
+        SnackBar(
+          content: Text('AI error: ${e.toString()}'),
+          backgroundColor: AppTheme.error,
+        ),
       );
     }
   }
@@ -464,12 +544,20 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               children: [
                 const Text(
                   'Upload prescription',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 const Text(
                   'Our AI reads it, extracts the medicines and a pharmacist verifies it.',
-                  style: TextStyle(color: AppTheme.mutedText, fontSize: 12, height: 1.4),
+                  style: TextStyle(
+                    color: AppTheme.mutedText,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -486,7 +574,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                             maxWidth: 1200,
                           );
                           if (picked != null) selected = File(picked.path);
-                          await _uploadRx(selected);
+                          await _uploadRx(selected, source: 'camera');
                         },
                       ),
                     ),
@@ -503,7 +591,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                             maxWidth: 1200,
                           );
                           if (picked != null) selected = File(picked.path);
-                          await _uploadRx(selected);
+                          await _uploadRx(selected, source: 'gallery');
                         },
                       ),
                     ),
@@ -537,7 +625,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
             const SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -545,15 +637,19 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
     );
   }
 
-  Future<void> _uploadRx(File? file) async {
+  Future<void> _uploadRx(File? file, {required String source}) async {
     if (file == null) return;
     setState(() => _uploadingRx = true);
     try {
       final bytes = await file.readAsBytes();
       final fileName = file.path.split(Platform.pathSeparator).last;
-      final pharmacyId = ref.read(selectedPharmacyProvider) ??
-          (ref.read(pharmaciesProvider).maybeWhen(
-                data: (pharmacies) => pharmacies.isNotEmpty ? pharmacies.first.id : null,
+      final pharmacyId =
+          ref.read(selectedPharmacyProvider) ??
+          (ref
+              .read(pharmaciesProvider)
+              .maybeWhen(
+                data: (pharmacies) =>
+                    pharmacies.isNotEmpty ? pharmacies.first.id : null,
                 orElse: () => null,
               ));
 
@@ -562,17 +658,19 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
         bytes,
         fileName,
         pharmacyId: pharmacyId,
-        source: 'camera',
+        source: source,
       );
       if (!mounted) return;
       setState(() {
-        _messages.add(AIChatMessage(
-          role: 'model',
-          content: prescription.items.isNotEmpty
-              ? 'I read your prescription. Here\u2019s what I found:'
-              : 'I uploaded your prescription, but could not read any medicines from it. A pharmacist will review it manually.',
-          prescription: prescription,
-        ));
+        _messages.add(
+          AIChatMessage(
+            role: 'model',
+            content: prescription.items.isNotEmpty
+                ? 'I read your prescription. Here\u2019s what I found:'
+                : 'I uploaded your prescription, but could not read any medicines from it. A pharmacist will review it manually.',
+            prescription: prescription,
+          ),
+        );
       });
       _scrollDown();
     } catch (e) {
@@ -615,7 +713,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               Expanded(
                 child: Text(
                   'Prescription #${prescription.id}',
-                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _statusChip(prescription.status),
@@ -643,7 +745,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
             const SizedBox(height: 6),
             const Text(
               'A pharmacist will verify these items before the order is final.',
-              style: TextStyle(color: AppTheme.mutedText, fontSize: 11, height: 1.4),
+              style: TextStyle(
+                color: AppTheme.mutedText,
+                fontSize: 11,
+                height: 1.4,
+              ),
             ),
           ],
         ],
@@ -669,43 +775,73 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               Expanded(
                 child: Text(
                   item.displayName,
-                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               if (item.isAmbiguous)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.orange.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Text(
                     'Check name',
-                    style: TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 )
               else if (confidence != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     '${(confidence * 100).round()}%',
-                    style: const TextStyle(color: AppTheme.primary, fontSize: 10, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      color: AppTheme.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
             ],
           ),
           if (item.dosage?.isNotEmpty ?? false)
-            Text('Dose: ${item.dosage}', style: const TextStyle(color: AppTheme.mutedText, fontSize: 11)),
+            Text(
+              'Dose: ${item.dosage}',
+              style: const TextStyle(color: AppTheme.mutedText, fontSize: 11),
+            ),
           if (item.frequency?.isNotEmpty ?? false)
-            Text('Frequency: ${item.frequency}', style: const TextStyle(color: AppTheme.mutedText, fontSize: 11)),
+            Text(
+              'Frequency: ${item.frequency}',
+              style: const TextStyle(color: AppTheme.mutedText, fontSize: 11),
+            ),
           if (item.duration?.isNotEmpty ?? false)
-            Text('Duration: ${item.duration}', style: const TextStyle(color: AppTheme.mutedText, fontSize: 11)),
+            Text(
+              'Duration: ${item.duration}',
+              style: const TextStyle(color: AppTheme.mutedText, fontSize: 11),
+            ),
           if (item.quantity != null)
-            Text('Quantity: ${item.quantity}', style: const TextStyle(color: AppTheme.mutedText, fontSize: 11)),
+            Text(
+              'Quantity: ${item.quantity}',
+              style: const TextStyle(color: AppTheme.mutedText, fontSize: 11),
+            ),
         ],
       ),
     );
@@ -728,18 +864,35 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
         children: [
           Row(
             children: [
-              Icon(flag.type == 'duplicate' ? Icons.content_copy : Icons.warning_amber, color: color, size: 15),
+              Icon(
+                flag.type == 'duplicate'
+                    ? Icons.content_copy
+                    : Icons.warning_amber,
+                color: color,
+                size: 15,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   '⚠ ${flag.title}',
-                  style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          Text(flag.message, style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4)),
+          Text(
+            flag.message,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
         ],
       ),
     );
@@ -756,19 +909,24 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
       if (!mounted) return;
       setState(() {
         _sending = false;
-        _messages.add(AIChatMessage(
-          role: 'model',
-          content: unmatched.isEmpty
-              ? 'Done! I added all prescription items to your cart. Review it and place the order whenever you\u2019re ready.'
-              : 'I added the items I could match to your cart. These could not be found in the catalog: ${unmatched.join(', ')}. A pharmacist can help with alternatives.',
-        ));
+        _messages.add(
+          AIChatMessage(
+            role: 'model',
+            content: unmatched.isEmpty
+                ? 'Done! I added all prescription items to your cart. Review it and place the order whenever you\u2019re ready.'
+                : 'I added the items I could match to your cart. These could not be found in the catalog: ${unmatched.join(', ')}. A pharmacist can help with alternatives.',
+          ),
+        );
       });
       _scrollDown();
     } catch (e) {
       if (!mounted) return;
       setState(() => _sending = false);
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text('Build cart failed: ${e.toString()}'), backgroundColor: AppTheme.error),
+        SnackBar(
+          content: Text('Build cart failed: ${e.toString()}'),
+          backgroundColor: AppTheme.error,
+        ),
       );
     }
   }
@@ -792,16 +950,26 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                 padding: EdgeInsets.fromLTRB(18, 16, 18, 10),
                 child: Text(
                   'Chat history',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               FutureBuilder<List<AIConversation>>(
-                future: ref.read(aiServiceProvider).listConversations(widget.token),
+                future: ref
+                    .read(aiServiceProvider)
+                    .listConversations(widget.token),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Padding(
                       padding: EdgeInsets.all(28),
-                      child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primary,
+                        ),
+                      ),
                     );
                   }
                   if (snapshot.hasError) {
@@ -809,17 +977,24 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                       padding: const EdgeInsets.all(18),
                       child: Text(
                         'Could not load history.\n${snapshot.error}',
-                        style: const TextStyle(color: AppTheme.mutedText, fontSize: 13),
+                        style: const TextStyle(
+                          color: AppTheme.mutedText,
+                          fontSize: 13,
+                        ),
                       ),
                     );
                   }
-                  final conversations = snapshot.data ?? const <AIConversation>[];
+                  final conversations =
+                      snapshot.data ?? const <AIConversation>[];
                   if (conversations.isEmpty) {
                     return const Padding(
                       padding: EdgeInsets.all(24),
                       child: Text(
                         'No previous chats yet.',
-                        style: TextStyle(color: AppTheme.mutedText, fontSize: 13),
+                        style: TextStyle(
+                          color: AppTheme.mutedText,
+                          fontSize: 13,
+                        ),
                       ),
                     );
                   }
@@ -828,7 +1003,8 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                     child: ListView.separated(
                       shrinkWrap: true,
                       itemCount: conversations.length,
-                      separatorBuilder: (_, _) => const Divider(color: AppTheme.border, height: 1),
+                      separatorBuilder: (_, _) =>
+                          const Divider(color: AppTheme.border, height: 1),
                       itemBuilder: (_, i) {
                         final c = conversations[i];
                         return ListTile(
@@ -837,14 +1013,24 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                             c.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
                           ),
                           subtitle: Text(
                             '${c.messageCount} messages · ${_fmtDate(c.updatedAt)}',
-                            style: const TextStyle(color: AppTheme.mutedText, fontSize: 11),
+                            style: const TextStyle(
+                              color: AppTheme.mutedText,
+                              fontSize: 11,
+                            ),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline, color: AppTheme.mutedText, size: 20),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: AppTheme.mutedText,
+                              size: 20,
+                            ),
                             onPressed: () => _deleteConversation(c.id),
                           ),
                           onTap: () {
@@ -868,7 +1054,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
   Future<void> _loadConversation(int id) async {
     setState(() => _sending = true);
     try {
-      final detail = await ref.read(aiServiceProvider).getConversation(widget.token, id);
+      final detail = await ref
+          .read(aiServiceProvider)
+          .getConversation(widget.token, id);
       if (!mounted) return;
       setState(() {
         _conversationId = id;
@@ -882,7 +1070,10 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
       if (!mounted) return;
       setState(() => _sending = false);
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text('Could not open chat: ${e.toString()}'), backgroundColor: AppTheme.error),
+        SnackBar(
+          content: Text('Could not open chat: ${e.toString()}'),
+          backgroundColor: AppTheme.error,
+        ),
       );
     }
   }
@@ -892,7 +1083,10 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
       await ref.read(aiServiceProvider).deleteConversation(widget.token, id);
       if (!mounted) return;
       scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(content: Text('Chat deleted'), backgroundColor: AppTheme.surface),
+        const SnackBar(
+          content: Text('Chat deleted'),
+          backgroundColor: AppTheme.surface,
+        ),
       );
       if (_conversationId == id) _newChat();
       // Refresh the open history sheet by reopening it.
@@ -900,7 +1094,10 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
       _openHistory();
     } catch (e) {
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text('Delete failed: ${e.toString()}'), backgroundColor: AppTheme.error),
+        SnackBar(
+          content: Text('Delete failed: ${e.toString()}'),
+          backgroundColor: AppTheme.error,
+        ),
       );
     }
   }
@@ -930,7 +1127,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
       case 'confirm_place_order':
         return result['success'] == true
             ? _orderPlacedCard(result)
-            : _errorCard(result['error']?.toString() ?? 'Could not place order');
+            : _errorCard(
+                result['error']?.toString() ?? 'Could not place order',
+              );
       case 'get_my_orders':
         return _ordersListCard(result);
       case 'get_order_status':
@@ -964,7 +1163,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           child,
@@ -987,7 +1190,8 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
     if (medicines.isEmpty) return _errorCard('No medicines found.');
     final pharmacy = result['pharmacy']?.toString();
     return _card(
-      title: 'Found ${result['found'] ?? medicines.length} medicine(s)'
+      title:
+          'Found ${result['found'] ?? medicines.length} medicine(s)'
           '${pharmacy != null && pharmacy.isNotEmpty ? ' — $pharmacy' : ''}',
       child: Column(children: medicines.map(_medicineTile).toList()),
     );
@@ -1001,7 +1205,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
           result['question']?.toString() ??
               result['follow_up_question']?.toString() ??
               'Please describe your symptoms.',
-          style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.5),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -1011,7 +1219,8 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
         style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.5),
       ),
     ];
-    final redFlag = result['red_flag']?.toString() ?? result['red_flag_text']?.toString();
+    final redFlag =
+        result['red_flag']?.toString() ?? result['red_flag_text']?.toString();
     if ((redFlag?.isNotEmpty ?? false) || result['doctor_visit'] == true) {
       children.addAll([
         const SizedBox(height: 8),
@@ -1024,7 +1233,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
           ),
           child: Text(
             '⚠️ See a doctor: ${redFlag ?? 'A doctor visit is recommended for this condition.'}',
-            style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              height: 1.4,
+            ),
           ),
         ),
       ]);
@@ -1033,19 +1246,36 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
     if (followUp != null && followUp.isNotEmpty) {
       children.addAll([
         const SizedBox(height: 8),
-        Text(followUp, style: const TextStyle(color: AppTheme.mutedText, fontSize: 12, height: 1.4)),
+        Text(
+          followUp,
+          style: const TextStyle(
+            color: AppTheme.mutedText,
+            fontSize: 12,
+            height: 1.4,
+          ),
+        ),
       ]);
     }
     final medicines = _medicinesOf(result);
     if (medicines.isNotEmpty) {
       children.addAll([
         const Divider(color: AppTheme.border, height: 20),
-        const Text('Recommended medicines', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+        const Text(
+          'Recommended medicines',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 8),
         ...medicines.map(_medicineTile),
       ]);
     }
-    return _card(title: '🩺 ${result['label'] ?? 'Symptom check'}', child: Column(children: children));
+    return _card(
+      title: '🩺 ${result['label'] ?? 'Symptom check'}',
+      child: Column(children: children),
+    );
   }
 
   Widget _medicineDetailCard(Map<String, dynamic> result) {
@@ -1057,9 +1287,14 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _metaRows({
-            if (result['generic_name'] != null) 'Generic': result['generic_name'].toString(),
-            if (result['brand'] != null && result['brand'].toString().isNotEmpty) 'Brand': result['brand'].toString(),
-            if (result['category'] != null && result['category'].toString().isNotEmpty) 'Category': result['category'].toString(),
+            if (result['generic_name'] != null)
+              'Generic': result['generic_name'].toString(),
+            if (result['brand'] != null &&
+                result['brand'].toString().isNotEmpty)
+              'Brand': result['brand'].toString(),
+            if (result['category'] != null &&
+                result['category'].toString().isNotEmpty)
+              'Category': result['category'].toString(),
             'Form': result['form']?.toString() ?? 'N/A',
             'Price': _fmtPrice(_num(result['price'])),
             'Stock': available
@@ -1071,7 +1306,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
             const Divider(color: AppTheme.border, height: 20),
             Text(
               result['description'].toString(),
-              style: const TextStyle(color: AppTheme.mutedText, fontSize: 12, height: 1.5),
+              style: const TextStyle(
+                color: AppTheme.mutedText,
+                fontSize: 12,
+                height: 1.5,
+              ),
             ),
           ],
           if (available) ...[
@@ -1093,7 +1332,8 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => MedicineDetailScreen(medicineId: m.id, token: widget.token),
+          builder: (_) =>
+              MedicineDetailScreen(medicineId: m.id, token: widget.token),
         ),
       ),
       child: Container(
@@ -1115,7 +1355,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                       Flexible(
                         child: Text(
                           '${m.name}${m.strength != null && m.strength!.isNotEmpty ? ' ${m.strength}' : ''}',
-                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -1129,7 +1373,10 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                       if (m.genericName?.isNotEmpty ?? false) m.genericName!,
                       if (m.form?.isNotEmpty ?? false) m.form!,
                     ].join(' · '),
-                    style: const TextStyle(color: AppTheme.mutedText, fontSize: 11),
+                    style: const TextStyle(
+                      color: AppTheme.mutedText,
+                      fontSize: 11,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1139,32 +1386,50 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                       children: [
                         Text(
                           _fmtPrice(m.price),
-                          style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            color: AppTheme.primary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.primary.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             'In stock · ${m.stock}',
-                            style: const TextStyle(color: AppTheme.primary, fontSize: 10, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              color: AppTheme.primary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
                     )
                   else
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.error.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
                         'Not available',
-                        style: TextStyle(color: AppTheme.error, fontSize: 10, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          color: AppTheme.error,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                 ],
@@ -1184,7 +1449,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               _actionButton(
                 label: '+ Add',
                 compact: true,
-                onPressed: () => _sendRaw('Add ${m.name} (ID: ${m.id}) to my cart with quantity 1'),
+                onPressed: () => _sendRaw(
+                  'Add ${m.name} (ID: ${m.id}) to my cart with quantity 1',
+                ),
               ),
             ] else
               const SizedBox.shrink(),
@@ -1198,14 +1465,17 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
     final items = _list(result['items']);
     if (items.isEmpty) return _errorCard('Your cart is empty.');
     return _card(
-      title: '🛒 Cart (${result['item_count'] ?? items.length} items) — ${result['pharmacy'] ?? ''}',
+      title:
+          '🛒 Cart (${result['item_count'] ?? items.length} items) — ${result['pharmacy'] ?? ''}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ...items.map((item) => _itemRow(
-                '${item['medicine_name']} ${item['strength'] ?? ''} × ${item['quantity']}',
-                _fmtPrice(_num(item['line_total'])),
-              )),
+          ...items.map(
+            (item) => _itemRow(
+              '${item['medicine_name']} ${item['strength'] ?? ''} × ${item['quantity']}',
+              _fmtPrice(_num(item['line_total'])),
+            ),
+          ),
           const Divider(color: AppTheme.border, height: 18),
           _itemRow('Subtotal', _fmtPrice(_num(result['subtotal'])), bold: true),
           const SizedBox(height: 10),
@@ -1213,7 +1483,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
             label: 'View Cart',
             primary: false,
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => CartScreen(token: widget.token)),
+              MaterialPageRoute<void>(
+                builder: (_) => CartScreen(token: widget.token),
+              ),
             ),
           ),
         ],
@@ -1232,13 +1504,17 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
           _metaRows({
             'Pharmacy': result['pharmacy']?.toString() ?? '',
             'Address': result['address']?.toString() ?? '',
-            'Payment': (result['payment_method'] ?? 'cod').toString().toUpperCase(),
+            'Payment': (result['payment_method'] ?? 'cod')
+                .toString()
+                .toUpperCase(),
           }),
           const Divider(color: AppTheme.border, height: 18),
-          ...items.map((item) => _itemRow(
-                '${item['medicine_name']} ${item['strength'] ?? ''} × ${item['quantity']}',
-                _fmtPrice(_num(item['line_total'])),
-              )),
+          ...items.map(
+            (item) => _itemRow(
+              '${item['medicine_name']} ${item['strength'] ?? ''} × ${item['quantity']}',
+              _fmtPrice(_num(item['line_total'])),
+            ),
+          ),
           const Divider(color: AppTheme.border, height: 18),
           _itemRow('Total', _fmtPrice(_num(result['subtotal'])), bold: true),
           const SizedBox(height: 10),
@@ -1268,7 +1544,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
             label: 'View Orders',
             primary: false,
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => OrdersScreen(token: widget.token)),
+              MaterialPageRoute<void>(
+                builder: (_) => OrdersScreen(token: widget.token),
+              ),
             ),
           ),
         ],
@@ -1297,7 +1575,14 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               children: [
                 Row(
                   children: [
-                    Text('#${o['id']}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+                    Text(
+                      '#${o['id']}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     _statusChip(status),
                   ],
@@ -1305,11 +1590,19 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '${o['items_count']} items · ${_fmtPrice(_num(o['total']))} · ${o['pharmacy'] ?? ''}',
-                  style: const TextStyle(color: AppTheme.mutedText, fontSize: 11),
+                  style: const TextStyle(
+                    color: AppTheme.mutedText,
+                    fontSize: 11,
+                  ),
                 ),
                 Text(
-                  _fmtDate(DateTime.tryParse(o['created_at']?.toString() ?? '')),
-                  style: TextStyle(color: AppTheme.mutedText.withValues(alpha: 0.7), fontSize: 10),
+                  _fmtDate(
+                    DateTime.tryParse(o['created_at']?.toString() ?? ''),
+                  ),
+                  style: TextStyle(
+                    color: AppTheme.mutedText.withValues(alpha: 0.7),
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),
@@ -1333,33 +1626,43 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
             'Total': _fmtPrice(_num(result['total'])),
             'Subtotal': _fmtPrice(_num(result['subtotal'])),
             'Delivery fee': _fmtPrice(_num(result['delivery_fee'])),
-            'Payment': (result['payment_method'] ?? '').toString().toUpperCase(),
+            'Payment': (result['payment_method'] ?? '')
+                .toString()
+                .toUpperCase(),
             'Pharmacy': result['pharmacy']?.toString() ?? '',
             'Address': result['address']?.toString() ?? '',
           }),
           if (history.isNotEmpty) ...[
             const Divider(color: AppTheme.border, height: 18),
-            ...history.map((h) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(shape: BoxShape.circle, color: _statusColor(h['status']?.toString())),
+            ...history.map(
+              (h) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _statusColor(h['status']?.toString()),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${h['status']} · ${_fmtDate(DateTime.tryParse(h['time']?.toString() ?? ''))}',
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${h['status']} · ${_fmtDate(DateTime.tryParse(h['time']?.toString() ?? ''))}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
                         ),
                       ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ],
       ),
@@ -1381,16 +1684,33 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
               children: [
                 Row(
                   children: [
-                    Text(a['label']?.toString() ?? '', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                    Text(
+                      a['label']?.toString() ?? '',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     if (a['is_default'] == true) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text('Default', style: TextStyle(color: AppTheme.primary, fontSize: 10, fontWeight: FontWeight.w600)),
+                        child: const Text(
+                          'Default',
+                          style: TextStyle(
+                            color: AppTheme.primary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ],
                   ],
@@ -1398,7 +1718,10 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '${a['address_line']}, ${a['city']}',
-                  style: const TextStyle(color: AppTheme.mutedText, fontSize: 12),
+                  style: const TextStyle(
+                    color: AppTheme.mutedText,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -1422,7 +1745,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
             decoration: BoxDecoration(
               color: AppTheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+              border: Border.all(
+                color: AppTheme.primary.withValues(alpha: 0.3),
+              ),
             ),
             child: Text(
               c['name']?.toString() ?? '',
@@ -1460,7 +1785,14 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
           const Icon(Icons.check_circle, color: AppTheme.primary, size: 16),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(message, style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4)),
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
           ),
         ],
       ),
@@ -1481,7 +1813,14 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
           const Icon(Icons.info_outline, color: AppTheme.error, size: 16),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(message, style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4)),
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
           ),
         ],
       ),
@@ -1503,11 +1842,21 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
         style: FilledButton.styleFrom(
           backgroundColor: primary ? AppTheme.primary : AppTheme.surface,
           foregroundColor: primary ? AppTheme.background : AppTheme.primary,
-          side: primary ? null : BorderSide(color: AppTheme.primary.withValues(alpha: 0.4)),
+          side: primary
+              ? null
+              : BorderSide(color: AppTheme.primary.withValues(alpha: 0.4)),
           padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
-        child: Text(label, style: TextStyle(fontSize: compact ? 12 : 13, fontWeight: FontWeight.w700)),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: compact ? 12 : 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
     );
   }
@@ -1542,7 +1891,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
       ),
       child: Text(
         (status ?? 'unknown').replaceAll('_', ' ').toUpperCase(),
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -1556,7 +1909,10 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
           Flexible(
             child: Text(
               label,
-              style: TextStyle(color: bold ? Colors.white : AppTheme.mutedText, fontSize: 12),
+              style: TextStyle(
+                color: bold ? Colors.white : AppTheme.mutedText,
+                fontSize: 12,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -1585,12 +1941,22 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
             children: [
               SizedBox(
                 width: 92,
-                child: Text('${e.key}:', style: const TextStyle(color: AppTheme.mutedText, fontSize: 12)),
+                child: Text(
+                  '${e.key}:',
+                  style: const TextStyle(
+                    color: AppTheme.mutedText,
+                    fontSize: 12,
+                  ),
+                ),
               ),
               Expanded(
                 child: Text(
                   e.value,
-                  style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
                 ),
               ),
             ],
@@ -1604,7 +1970,11 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
 
   List<Map<String, dynamic>> _list(Object? raw) {
     if (raw is! List) return const [];
-    return raw.map((e) => e is Map ? Map<String, dynamic>.from(e) : <String, dynamic>{}).toList();
+    return raw
+        .map(
+          (e) => e is Map ? Map<String, dynamic>.from(e) : <String, dynamic>{},
+        )
+        .toList();
   }
 
   double _num(Object? value) {
@@ -1618,7 +1988,18 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
   }
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   String _fmtDate(DateTime? dt) {
