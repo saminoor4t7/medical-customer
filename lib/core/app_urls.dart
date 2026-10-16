@@ -8,7 +8,7 @@ class AppUrls {
       return _configuredBaseUrl.replaceFirst(RegExp(r'/$'), '');
     }
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://192.168.1.7:8000';
+      return 'http://192.168.2.158:8000';
     }
     return 'http://127.0.0.1:8000';
   }
@@ -27,6 +27,7 @@ class AppUrls {
 
   // Catalog
   static String get medicines => '$baseUrl/catalog/medicines/';
+  static String get scanAvailability => '$baseUrl/catalog/scan-availability/';
   static String get categories => '$baseUrl/catalog/categories/';
   static String medicineDetail(int id) => '$baseUrl/catalog/medicines/$id/';
   static String categoryMedicines(int id) =>

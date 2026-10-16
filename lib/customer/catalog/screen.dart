@@ -78,19 +78,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               SliverToBoxAdapter(child: _buildAiBanner()),
 
               // ── Categories ──
-              SliverToBoxAdapter(
-                child: _buildCategoriesSection(categories),
-              ),
+              SliverToBoxAdapter(child: _buildCategoriesSection(categories)),
 
               // ── Search Results or Featured ──
               if (_searchQuery.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: _buildSearchResults(medicines),
-                )
+                SliverToBoxAdapter(child: _buildSearchResults(medicines))
               else
-                SliverToBoxAdapter(
-                  child: _buildFeaturedSection(featured),
-                ),
+                SliverToBoxAdapter(child: _buildFeaturedSection(featured)),
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
@@ -158,7 +152,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF1D3C5B).withValues(alpha:0.5)),
+          border: Border.all(
+            color: const Color(0xFF1D3C5B).withValues(alpha: 0.5),
+          ),
         ),
         child: Row(
           children: [
@@ -226,7 +222,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha:0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -251,10 +247,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     SizedBox(height: 4),
                     Text(
                       'AI reads your prescription & builds your cart',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -293,16 +286,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SizedBox(
             height: 90,
             child: categories.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: teal),
-              ),
+              loading: () =>
+                  const Center(child: CircularProgressIndicator(color: teal)),
               error: (_, _) => const Center(
                 child: Text('Failed to load', style: TextStyle(color: muted)),
               ),
               data: (cats) {
                 if (cats.isEmpty) {
                   return const Center(
-                    child: Text('No categories', style: TextStyle(color: muted)),
+                    child: Text(
+                      'No categories',
+                      style: TextStyle(color: muted),
+                    ),
                   );
                 }
                 return ListView.separated(
@@ -359,7 +354,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       children: [
                         Icon(Icons.search_off, color: muted, size: 48),
                         SizedBox(height: 12),
-                        Text('No medicines found', style: TextStyle(color: muted)),
+                        Text(
+                          'No medicines found',
+                          style: TextStyle(color: muted),
+                        ),
                       ],
                     ),
                   ),
@@ -416,7 +414,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 return const Padding(
                   padding: EdgeInsets.all(32),
                   child: Center(
-                    child: Text('No medicines yet', style: TextStyle(color: muted)),
+                    child: Text(
+                      'No medicines yet',
+                      style: TextStyle(color: muted),
+                    ),
                   ),
                 );
               }
@@ -427,13 +428,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   crossAxisCount: 2,
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
-                  childAspectRatio: 0.72,
+                  childAspectRatio: 0.62,
                 ),
                 itemCount: items.length,
-                itemBuilder: (_, index) => _MedicineCard(
-                  medicine: items[index],
-                  token: widget.token,
-                ),
+                itemBuilder: (_, index) =>
+                    _MedicineCard(medicine: items[index], token: widget.token),
               );
             },
           ),
@@ -474,7 +473,7 @@ class _CategoryChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: teal.withValues(alpha:0.25)),
+          border: Border.all(color: teal.withValues(alpha: 0.25)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -483,7 +482,7 @@ class _CategoryChip extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: teal.withValues(alpha:0.10),
+                color: teal.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
               child: category.image != null && category.image!.isNotEmpty
@@ -543,18 +542,19 @@ class _MedicineCard extends ConsumerWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) => MedicineDetailScreen(
-              medicineId: medicine.id,
-              token: token,
-            ),
+            builder: (_) =>
+                MedicineDetailScreen(medicineId: medicine.id, token: token),
           ),
         );
       },
       child: Container(
+        clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF0B5061).withValues(alpha:0.4)),
+          border: Border.all(
+            color: const Color(0xFF0B5061).withValues(alpha: 0.4),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -566,8 +566,9 @@ class _MedicineCard extends ConsumerWidget {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: const Color(0xFF102F45),
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                 ),
                 child: medicine.image != null && medicine.image!.isNotEmpty
                     ? ClipRRect(
@@ -615,18 +616,20 @@ class _MedicineCard extends ConsumerWidget {
                     const Spacer(),
                     Row(
                       children: [
-                        Text(
-                          'PKR ${price.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: teal,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
+                        Flexible(
+                          child: Text(
+                            'PKR ${price.toStringAsFixed(2)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: teal,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                        const Spacer(),
-                        _AddButton(
-                          onTap: () => _addToCart(context, ref),
-                        ),
+                        const SizedBox(width: 6),
+                        _AddButton(onTap: () => _addToCart(context, ref)),
                       ],
                     ),
                   ],
@@ -640,8 +643,8 @@ class _MedicineCard extends ConsumerWidget {
   }
 
   Widget _placeholderIcon() => const Center(
-        child: Icon(Icons.medication_outlined, color: teal, size: 38),
-      );
+    child: Icon(Icons.medication_outlined, color: teal, size: 38),
+  );
 
   double _resolvePrice(WidgetRef ref) {
     return ref
@@ -709,10 +712,8 @@ class _MedicineListTile extends ConsumerWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) => MedicineDetailScreen(
-              medicineId: medicine.id,
-              token: token,
-            ),
+            builder: (_) =>
+                MedicineDetailScreen(medicineId: medicine.id, token: token),
           ),
         );
       },
@@ -722,7 +723,9 @@ class _MedicineListTile extends ConsumerWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF0B5061).withValues(alpha:0.4)),
+          border: Border.all(
+            color: const Color(0xFF0B5061).withValues(alpha: 0.4),
+          ),
         ),
         child: Row(
           children: [
@@ -843,9 +846,9 @@ class _AddButton extends StatelessWidget {
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: teal.withValues(alpha:0.12),
+          color: teal.withValues(alpha: 0.12),
           shape: BoxShape.circle,
-          border: Border.all(color: teal.withValues(alpha:0.4)),
+          border: Border.all(color: teal.withValues(alpha: 0.4)),
         ),
         child: const Icon(Icons.add, color: teal, size: 20),
       ),
@@ -989,10 +992,8 @@ class _CategoryDetailScreen extends ConsumerWidget {
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: items.length,
-              itemBuilder: (_, index) => _CategoryMedicineTile(
-                medicine: items[index],
-                token: token,
-              ),
+              itemBuilder: (_, index) =>
+                  _CategoryMedicineTile(medicine: items[index], token: token),
             ),
           );
         },
@@ -1023,10 +1024,8 @@ class _CategoryMedicineTile extends ConsumerWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) => MedicineDetailScreen(
-              medicineId: medicine.id,
-              token: token,
-            ),
+            builder: (_) =>
+                MedicineDetailScreen(medicineId: medicine.id, token: token),
           ),
         );
       },
@@ -1036,7 +1035,9 @@ class _CategoryMedicineTile extends ConsumerWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF0B5061).withValues(alpha:0.4)),
+          border: Border.all(
+            color: const Color(0xFF0B5061).withValues(alpha: 0.4),
+          ),
         ),
         child: Row(
           children: [

@@ -44,6 +44,7 @@ dependencies:
   google_maps_flutter: ^2.18.0
   geolocator: ^14.0.2
   image_picker: ^1.1.2
+  google_mlkit_text_recognition: ^0.16.0
   speech_to_text: ^7.4.0
   flutter_tts: ^4.2.5
 

@@ -10,6 +10,8 @@
 /// ```
 library;
 
+import '../catalog/availability.dart';
+
 /// A medicine returned inside AI action results (search / symptom check /
 /// medicine details). Unlike the catalog `Medicine`, this shape carries
 /// pharmacy-specific price/stock and a plain-string brand.
@@ -95,7 +97,8 @@ class AIChatResult {
 
   factory AIChatResult.fromJson(Map<String, dynamic> json) {
     return AIChatResult(
-      reply: json['reply']?.toString() ??
+      reply:
+          json['reply']?.toString() ??
           json['response']?.toString() ??
           "I've processed your request.",
       actions: _actionList(json['actions']),
@@ -113,12 +116,22 @@ class AIChatMessage {
     required this.content,
     this.actions = const [],
     this.prescription,
+    this.availability,
+    this.availabilityPharmacyId,
+    this.pendingReviewPath,
+    this.pendingReviewSource,
+    this.pendingReviewPharmacyId,
   });
 
   final String role;
   final String content;
   final List<AIAction> actions;
   final Object? prescription;
+  final MedicineAvailability? availability;
+  final int? availabilityPharmacyId;
+  final String? pendingReviewPath;
+  final String? pendingReviewSource;
+  final int? pendingReviewPharmacyId;
 
   bool get isUser => role == 'user';
 

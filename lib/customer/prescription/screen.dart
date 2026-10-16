@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../main.dart';
 import '../cart/provider.dart';
+import '../catalog/availability.dart';
+import '../catalog/ocr_service.dart';
 import '../pharmacy/provider.dart';
 import 'model.dart';
 import 'services.dart';
@@ -29,6 +31,8 @@ class _PrescriptionUploadScreenState
 
   final _picker = ImagePicker();
   final _service = PrescriptionService();
+  final _availabilityService = AvailabilityService();
+  final _ocrService = MedicineOcrService();
 
   File? _selectedImage;
   bool _uploading = false;
@@ -74,10 +78,19 @@ class _PrescriptionUploadScreenState
         if (pharmacyId == null) {
           setState(() {
             _uploading = false;
-            _resultMessage = 'A pharmacy must be selected to upload a prescription.';
+            _resultMessage =
+                'A pharmacy must be selected to upload a prescription.';
           });
           return;
         }
+      }
+
+      String? recognizedText;
+      MedicineAvailability? availability;
+      try {
+        recognizedText = await _ocrService.recognizeFile(_selectedImage!.path);
+      } catch (e) {
+        debugPrint('[OCR] Could not read image text: $e');
       }
 
       final prescription = await _service.uploadPrescription(
@@ -87,14 +100,36 @@ class _PrescriptionUploadScreenState
         pharmacyId: pharmacyId,
         source: 'gallery',
       );
+      try {
+        availability = await _availabilityService.scanBestMatch(
+          widget.token,
+          preferredTexts: prescription.items
+              .map(
+                (item) => item.rawMedicineText?.trim().isNotEmpty == true
+                    ? item.rawMedicineText!.trim()
+                    : item.displayName,
+              )
+              .toList(),
+          recognizedText: recognizedText ?? '',
+          pharmacyId: pharmacyId,
+        );
+      } catch (e) {
+        debugPrint('[OCR] Could not check medicine availability: $e');
+      }
 
       setState(() {
         _prescription = prescription;
-        _resultMessage = prescription.items.isNotEmpty
+        final aiMessage = prescription.items.isNotEmpty
             ? 'AI read ${prescription.items.length} medicine(s) from your prescription.\n'
-                'A pharmacist will verify before the order is final.'
+                  'A pharmacist will verify before the order is final.'
             : 'Prescription uploaded successfully (status: ${prescription.status ?? 'processing'}).\n'
-                'AI could not read medicines from it — a pharmacist will review manually.';
+                  'AI could not read medicines from it — a pharmacist will review manually.';
+        _resultMessage = [
+          if (recognizedText != null && recognizedText.isNotEmpty)
+            'OCR text: $recognizedText',
+          if (availability != null) availability.summary,
+          aiMessage,
+        ].join('\n\n');
         _uploadSuccess = true;
       });
     } catch (e) {
@@ -219,7 +254,7 @@ class _PrescriptionUploadScreenState
                   color: cardColor,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: teal.withValues(alpha:0.3),
+                    color: teal.withValues(alpha: 0.3),
                     style: BorderStyle.solid,
                   ),
                 ),
@@ -235,7 +270,7 @@ class _PrescriptionUploadScreenState
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: teal.withValues(alpha:0.10),
+                              color: teal.withValues(alpha: 0.10),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -299,7 +334,7 @@ class _PrescriptionUploadScreenState
                 style: FilledButton.styleFrom(
                   backgroundColor: teal,
                   foregroundColor: navy,
-                  disabledBackgroundColor: teal.withValues(alpha:0.3),
+                  disabledBackgroundColor: teal.withValues(alpha: 0.3),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -381,13 +416,13 @@ class _PrescriptionUploadScreenState
                 ),
               ),
             ],
-            
+
             // ── AI-extracted items + safety flags ──
             if (_prescription != null && _uploadSuccess) ...[
               const SizedBox(height: 16),
               _ExtractionCard(prescription: _prescription!),
             ],
-            
+
             // ── Build Cart button ──
             if (_prescription != null && _uploadSuccess) ...[
               const SizedBox(height: 18),
@@ -525,7 +560,7 @@ class _SourceButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: teal.withValues(alpha:0.25)),
+          border: Border.all(color: teal.withValues(alpha: 0.25)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -613,7 +648,9 @@ class _ExtractionCard extends StatelessWidget {
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: highRisk ? error.withValues(alpha: 0.5) : teal.withValues(alpha: 0.3),
+          color: highRisk
+              ? error.withValues(alpha: 0.5)
+              : teal.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -652,7 +689,11 @@ class _ExtractionCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 8),
               child: Row(
                 children: [
-                  Icon(Icons.verified_outlined, color: teal.withValues(alpha: 0.8), size: 15),
+                  Icon(
+                    Icons.verified_outlined,
+                    color: teal.withValues(alpha: 0.8),
+                    size: 15,
+                  ),
                   const SizedBox(width: 6),
                   const Text(
                     'No duplicate-ingredient or interaction flags found.',
@@ -682,7 +723,11 @@ class _ExtractionCard extends StatelessWidget {
       ),
       child: Text(
         (status ?? 'unknown').replaceAll('_', ' ').toUpperCase(),
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -722,7 +767,8 @@ class _ExtractionCard extends StatelessWidget {
           Text(
             [
               if (item.dosage?.isNotEmpty ?? false) 'Dose: ${item.dosage}',
-              if (item.frequency?.isNotEmpty ?? false) 'Freq: ${item.frequency}',
+              if (item.frequency?.isNotEmpty ?? false)
+                'Freq: ${item.frequency}',
               if (item.duration?.isNotEmpty ?? false) 'Dur: ${item.duration}',
               if (item.quantity != null) 'Qty: ${item.quantity}',
             ].join('  ·  '),
@@ -742,7 +788,11 @@ class _ExtractionCard extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -763,7 +813,9 @@ class _ExtractionCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                flag.type == 'duplicate' ? Icons.content_copy : Icons.warning_amber,
+                flag.type == 'duplicate'
+                    ? Icons.content_copy
+                    : Icons.warning_amber,
                 color: color,
                 size: 15,
               ),
@@ -771,12 +823,24 @@ class _ExtractionCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   flag.title,
-                  style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
-          ),          const SizedBox(height: 4),
-          Text(flag.message, style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4)),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            flag.message,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
         ],
       ),
     );

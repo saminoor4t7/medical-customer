@@ -48,7 +48,11 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: Colors.redAccent, size: 55),
+              const Icon(
+                Icons.error_outline,
+                color: Colors.redAccent,
+                size: 55,
+              ),
               const SizedBox(height: 14),
               Text(
                 e.toString(),
@@ -82,10 +86,7 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                       onTap: () => Navigator.of(context).pop(),
                     ),
                     const Spacer(),
-                    _CircleBtn(
-                      icon: Icons.favorite_border,
-                      onTap: () {},
-                    ),
+                    _CircleBtn(icon: Icons.favorite_border, onTap: () {}),
                   ],
                 ),
               ),
@@ -111,8 +112,7 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                                 child: Image.network(
                                   med.image!,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) =>
-                                      _placeholderIcon(),
+                                  errorBuilder: (_, _, _) => _placeholderIcon(),
                                 ),
                               )
                             : _placeholderIcon(),
@@ -156,10 +156,10 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: teal.withValues(alpha:0.12),
+                              color: teal.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: teal.withValues(alpha:0.3),
+                                color: teal.withValues(alpha: 0.3),
                               ),
                             ),
                             child: Text(
@@ -181,12 +181,9 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          if (med.category != null)
-                            _Tag(label: med.category!),
-                          if (med.form != null)
-                            _Tag(label: med.form!),
-                          if (med.strength != null)
-                            _Tag(label: med.strength!),
+                          if (med.category != null) _Tag(label: med.category!),
+                          if (med.form != null) _Tag(label: med.form!),
+                          if (med.strength != null) _Tag(label: med.strength!),
                           if (med.requiresPrescription)
                             const _Tag(
                               label: 'Prescription Required',
@@ -202,13 +199,13 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: med.isActive
-                              ? teal.withValues(alpha:0.08)
-                              : Colors.red.withValues(alpha:0.08),
+                              ? teal.withValues(alpha: 0.08)
+                              : Colors.red.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: med.isActive
-                                ? teal.withValues(alpha:0.2)
-                                : Colors.red.withValues(alpha:0.2),
+                                ? teal.withValues(alpha: 0.2)
+                                : Colors.red.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
@@ -222,9 +219,7 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              med.isActive
-                                  ? 'Available'
-                                  : 'Not Available',
+                              med.isActive ? 'Available' : 'Not Available',
                               style: TextStyle(
                                 color: med.isActive ? teal : Colors.redAccent,
                                 fontWeight: FontWeight.w600,
@@ -251,7 +246,7 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                         Text(
                           med.description!,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha:0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 14,
                             height: 1.6,
                           ),
@@ -263,8 +258,7 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
               ),
 
               // ── Bottom Add-to-Cart bar ──
-              if (med.isActive)
-                _buildAddToCartBar(med, price),
+              if (med.isActive) _buildAddToCartBar(med, price),
             ],
           ),
         ),
@@ -275,17 +269,15 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
   double _basePrice(Medicine? medicine) => medicine?.price ?? 0;
 
   Widget _placeholderIcon() => const Center(
-        child: Icon(Icons.medication_outlined, color: teal, size: 64),
-      );
+    child: Icon(Icons.medication_outlined, color: teal, size: 64),
+  );
 
   Widget _buildAddToCartBar(Medicine med, double price) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
       decoration: BoxDecoration(
         color: cardColor,
-        border: Border(
-          top: BorderSide(color: teal.withValues(alpha:0.15)),
-        ),
+        border: Border(top: BorderSide(color: teal.withValues(alpha: 0.15))),
       ),
       child: Row(
         children: [
@@ -354,11 +346,16 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                         children: [
                           const Icon(Icons.shopping_cart, size: 20),
                           const SizedBox(width: 8),
-                          Text(
-                            'Add to Cart • PKR ${(price * _quantity).toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
+                          Flexible(
+                            child: Text(
+                              'Add to Cart • PKR ${(price * _quantity).toStringAsFixed(2)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
                         ],
@@ -431,7 +428,7 @@ class _CircleBtn extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: cardColor,
-            border: Border.all(color: teal.withValues(alpha:0.3)),
+            border: Border.all(color: teal.withValues(alpha: 0.3)),
           ),
           child: Icon(icon, color: Colors.white, size: 22),
         ),
@@ -477,9 +474,9 @@ class _Tag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha:0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha:0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Text(
         label,

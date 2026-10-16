@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,6 +10,8 @@ import '../../main.dart';
 import '../cart/provider.dart';
 import '../cart/screen.dart';
 import '../catalog/medicine_detail_screen.dart';
+import '../catalog/availability.dart';
+import '../catalog/ocr_service.dart';
 import '../orders/screen.dart';
 import '../pharmacy/provider.dart';
 import '../prescription/model.dart';
@@ -33,9 +36,12 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
   final _scrollController = ScrollController();
   final _picker = ImagePicker();
   final _rxService = PrescriptionService();
+  final _availabilityService = AvailabilityService();
+  final _ocrService = MedicineOcrService();
   final List<AIChatMessage> _messages = [];
   bool _sending = false;
   bool _uploadingRx = false;
+  bool _addingScannedMedicine = false;
   int? _conversationId;
 
   // Bilingual quick prompts — Panda replies in English or Roman Urdu.
@@ -344,6 +350,13 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                     _buildPrescriptionCard(
                       message.prescription! as Prescription,
                     ),
+                  if (message.availability != null)
+                    _buildAvailabilityCard(
+                      message.availability!,
+                      message.availabilityPharmacyId,
+                    ),
+                  if (message.pendingReviewPath != null)
+                    _buildSendForReviewButton(message),
                   ...message.actions.map(_buildActionCard),
                 ],
               ),
@@ -641,9 +654,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
     if (file == null) return;
     setState(() => _uploadingRx = true);
     try {
-      final bytes = await file.readAsBytes();
-      final fileName = file.path.split(Platform.pathSeparator).last;
-      final pharmacyId =
+      var pharmacyId =
           ref.read(selectedPharmacyProvider) ??
           (ref
               .read(pharmaciesProvider)
@@ -652,23 +663,45 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
                     pharmacies.isNotEmpty ? pharmacies.first.id : null,
                 orElse: () => null,
               ));
+      if (pharmacyId == null) {
+        throw Exception('Select a pharmacy before sending for review.');
+      }
+      ref.read(selectedPharmacyProvider.notifier).selectIfNone(pharmacyId);
 
-      final prescription = await _rxService.uploadPrescription(
-        widget.token,
-        bytes,
-        fileName,
-        pharmacyId: pharmacyId,
-        source: source,
-      );
+      String? ocrText;
+      MedicineAvailability? availability;
+      try {
+        ocrText = await _ocrService.recognizeFile(file.path);
+      } catch (e) {
+        if (kDebugMode) debugPrint('[OCR] Local scan/check failed: $e');
+      }
+      if (ocrText?.isNotEmpty == true) {
+        try {
+          availability = await _availabilityService.scanBestMatch(
+            widget.token,
+            preferredTexts: const [],
+            recognizedText: ocrText!,
+            pharmacyId: pharmacyId,
+          );
+        } catch (e) {
+          if (kDebugMode) debugPrint('[OCR] Availability lookup failed: $e');
+        }
+      }
       if (!mounted) return;
       setState(() {
         _messages.add(
           AIChatMessage(
             role: 'model',
-            content: prescription.items.isNotEmpty
-                ? 'I read your prescription. Here\u2019s what I found:'
-                : 'I uploaded your prescription, but could not read any medicines from it. A pharmacist will review it manually.',
-            prescription: prescription,
+            content: availability?.matched == true
+                ? 'Medicine identified. Review the tablet and strength below.'
+                : 'Image ready for AI extraction and pharmacy review.',
+            availability: availability?.matched == true ? availability : null,
+            availabilityPharmacyId: availability?.matched == true
+                ? pharmacyId
+                : null,
+            pendingReviewPath: file.path,
+            pendingReviewSource: source,
+            pendingReviewPharmacyId: pharmacyId,
           ),
         );
       });
@@ -677,7 +710,7 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
       if (!mounted) return;
       scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
-          content: Text('Prescription upload failed: ${e.toString()}'),
+          content: Text('Could not prepare image for review: ${e.toString()}'),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -755,6 +788,191 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildAvailabilityCard(
+    MedicineAvailability availability,
+    int? pharmacyId,
+  ) {
+    final medicineId = _asInt(availability.medicine?['id']);
+    final strength = availability.medicine?['strength']?.toString();
+    final canAdd =
+        availability.matched &&
+        availability.available &&
+        medicineId != null &&
+        pharmacyId != null;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.accentBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                availability.available
+                    ? Icons.check_circle
+                    : Icons.info_outline,
+                color: availability.available
+                    ? AppTheme.primary
+                    : AppTheme.mutedText,
+                size: 19,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  availability.displayName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (strength?.isNotEmpty ?? false) ...[
+            const SizedBox(height: 5),
+            Text(
+              [if (strength?.isNotEmpty ?? false) strength].join(' · '),
+              style: const TextStyle(color: AppTheme.mutedText, fontSize: 12),
+            ),
+          ],
+          const SizedBox(height: 6),
+          Text(
+            availability.available
+                ? '${availability.stock} in stock${availability.pharmacy == null ? '' : ' · ${availability.pharmacy}'}'
+                : availability.matched
+                ? 'Currently out of stock${availability.pharmacy == null ? '' : ' · ${availability.pharmacy}'}'
+                : 'No matching medicine found at this pharmacy.',
+            style: const TextStyle(color: AppTheme.mutedText, fontSize: 12),
+          ),
+          if (canAdd) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _addingScannedMedicine
+                    ? null
+                    : () => _addScannedMedicine(medicineId, pharmacyId),
+                icon: _addingScannedMedicine
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add_shopping_cart, size: 18),
+                label: Text(_addingScannedMedicine ? 'Adding…' : 'Add to cart'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSendForReviewButton(AIChatMessage message) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: SizedBox(
+        width: double.infinity,
+        child: FilledButton.icon(
+          onPressed: _uploadingRx ? null : () => _sendImageForReview(message),
+          icon: _uploadingRx
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.local_pharmacy_outlined),
+          label: Text(
+            _uploadingRx
+                ? 'Sending to pharmacy…'
+                : 'AI extraction & safety check · Send to pharmacy',
+          ),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppTheme.primary,
+            foregroundColor: AppTheme.background,
+            padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _sendImageForReview(AIChatMessage message) async {
+    final path = message.pendingReviewPath;
+    final pharmacyId = message.pendingReviewPharmacyId;
+    if (path == null || pharmacyId == null) return;
+
+    setState(() => _uploadingRx = true);
+    try {
+      final prescription = await _rxService.uploadPrescription(
+        widget.token,
+        await File(path).readAsBytes(),
+        path.split(Platform.pathSeparator).last,
+        pharmacyId: pharmacyId,
+        source: message.pendingReviewSource ?? 'gallery',
+      );
+      if (!mounted) return;
+
+      final index = _messages.indexOf(message);
+      if (index >= 0) {
+        setState(() {
+          _messages[index] = AIChatMessage(
+            role: 'model',
+            content:
+                'Image sent to ${prescription.pharmacyName ?? 'the selected pharmacy'} for review. AI extraction and safety check are complete.',
+            prescription: prescription,
+            availability: message.availability,
+            availabilityPharmacyId: message.availabilityPharmacyId,
+          );
+        });
+      }
+      _scrollDown();
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text('Could not send image for pharmacy review: $e'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingRx = false);
+    }
+  }
+
+  Future<void> _addScannedMedicine(int medicineId, int pharmacyId) async {
+    setState(() => _addingScannedMedicine = true);
+    try {
+      await ref
+          .read(cartControllerProvider)
+          .addItem(widget.token, medicineId, 1, pharmacyId: pharmacyId);
+      if (mounted) {
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(content: Text('Medicine added to your cart.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(content: Text('Could not add medicine to cart: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _addingScannedMedicine = false);
+    }
   }
 
   Widget _prescriptionItemTile(PrescriptionItem item) {
@@ -2045,4 +2263,9 @@ class _AIChatScreenState extends ConsumerState<AIChatScreen> {
       }
     });
   }
+}
+
+int? _asInt(Object? value) {
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '');
 }
